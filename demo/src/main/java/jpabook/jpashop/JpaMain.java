@@ -6,6 +6,7 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import javassist.bytecode.stackmap.BasicBlock.Catch;
+import jpabook.jpashop.domain.Book;
 
 public class JpaMain {
     public static void main(String[] args) {
@@ -16,6 +17,12 @@ public class JpaMain {
         tx.begin();
         try {
 
+            Book book = new Book();
+            book.setName("JPA");
+            book.setAuthor("이창종");
+            em.persist(book);
+
+            tx.commit();
         } catch (Exception e) {
             tx.rollback();
         } finally {
