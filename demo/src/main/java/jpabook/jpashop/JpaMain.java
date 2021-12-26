@@ -8,6 +8,7 @@ import javax.persistence.Persistence;
 import javassist.bytecode.stackmap.BasicBlock.Catch;
 import jpabook.jpashop.domain.Book;
 
+
 public class JpaMain {
     public static void main(String[] args) {
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
