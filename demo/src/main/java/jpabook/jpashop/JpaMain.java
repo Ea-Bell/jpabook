@@ -62,11 +62,50 @@ public class JpaMain {
 		 
 //===============================
 		// 영속성 전이(cascade)와 고아객체		
-		Cascade(em);
+		//Cascade(em);
+		Orphan(em);
 		
 
 		
 	}
+
+	private static void Orphan(EntityManager em) {
+		// 주의사항
+		// 참조가 제거된 엔티티는 다른 곳에서 참조하지 않는 고아 객체로 보고 삭제하는 기능.
+		// 참조하는 곳이 하나일 때 사용해야함!
+		// 특정 엔티티가 개인 소유할 때 사용!
+		// @OneToOne, @OneToMany만 가능
+		// 참고: 개념적으로 부모를 제거하면 자식은 고아가 된다. 따라서 고아 객체 제거 기능을 활성화 하면, 부모를 제거할 때
+		// 자식도 함께 제거된다. 이것은 CascadeType.REMOVE처럼 동작한다.
+		
+		
+		/**
+		 * 영속성 전이 + 고아 객체, 생명주기
+		 * CascadeType.ALL + orphanRemovel= true
+		 * 스스로 생명주기를 관리하는 엔티티는  em.persist()로 영속화, em.remove()로 제거
+		 * 두 옵션을 모두 활성화 하면 부모 엔ㅇ티티를 토앻서 자식의 생명 주기를 관리할 수 있다.
+		 * 도메인 주도 설계(DDD)의 Aggregate Root개념을 구현할 때 유용
+		 */
+		
+		
+		
+		Child child1= new Child();
+		Child child2 = new Child();
+		
+		Parent parent = new Parent();
+		parent.addChild(child1);
+		parent.addChild(child2);
+		
+		em.persist(parent);
+		
+		em.flush();
+		em.clear();
+		
+		Parent findParent=em.find(Parent.class, parent.getId());
+		findParent.getChildList().remove(0);
+		
+	}
+
 
 	private static void Cascade(EntityManager em) {
 		
