@@ -10,7 +10,9 @@ import javax.persistence.Persistence;
 
 
 import jpabook.jpashop.domain.Book;
+import jpabook.jpashop.domain.Child;
 import jpabook.jpashop.domain.Member;
+import jpabook.jpashop.domain.Parent;
 import jpabook.jpashop.domain.Team;
 
 
@@ -56,9 +58,39 @@ public class JpaMain {
 // =============================== 
        // 지연로딩 테스트
        //LazyLoding(em, emf);
-       EagerLoding(em, emf);
+//       EagerLoding(em, emf);
+		 
+//===============================
+		// 영속성 전이(cascade)와 고아객체		
+		Cascade(em);
+		
+
 		
 	}
+
+	private static void Cascade(EntityManager em) {
+		
+		// 주의사항 ex) child가 현재 Parent에 한곳에서만 관리를 하는데
+		// 다른곳(Member)에서도 관리가된다고하면 Cascade를 쓰지 말아야한다.
+		// 라이프사이클이 같을때(등록 삭제), 단일소유자일때!. 
+		/**
+		 *  CASCADE 종류
+		 *  
+		 *  ALL: 모두 적용
+		 *  Persist:영속된것만
+		 *  
+		 *  ...(여러가지 있는데 잘 안쓰임)
+		 */
+		Child child1= new Child();
+		Child child2 = new Child();
+		
+		Parent parent = new Parent();
+		parent.addChild(child1);
+		parent.addChild(child2);
+		
+		em.persist(parent);
+	}
+
 
 	private static void EagerLoding(EntityManager em, EntityManagerFactory emf) {
 
