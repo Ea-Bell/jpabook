@@ -55,20 +55,21 @@ public class JpaMain {
        
 // =============================== 
        // 지연로딩 테스트
-       LazyLoding(em, emf);
+       //LazyLoding(em, emf);
+       EagerLoding(em, emf);
 		
 	}
 
-	private static void LazyLoding(EntityManager em, EntityManagerFactory emf) {
-		// 지연로딩은 실제 team을 사용하는 시점에 초기화(중요)
+	private static void EagerLoding(EntityManager em, EntityManagerFactory emf) {
 
-//			Member객체에 ManyToOne의 fetch 전략을 Lazy로 setting해줘야 지연로딩 		
-//		   @ManyToOne(fetch = FetchType.LAZY)
-//		    @JoinColumn(name = "TEAM_ID")
-//		    private Team team;
+//		Member객체에 ManyToOne의 fetch 전략을 EAGER로 setting해줘야 지연로딩 		
+//	   @ManyToOne(fetch = FetchType.EAGER)
+//	    @JoinColumn(name = "TEAM_ID")
+//	    private Team team;
 		
 		Member member1 = new Member();
 		Team team = new Team();
+		team.setName("teamA");
 		em.persist(team);
 		
 		member1.setTeam(team);
@@ -82,6 +83,39 @@ public class JpaMain {
 		
 		Member m = em.find(Member.class, member1.getId());
 		System.out.println("m = " + m.getTeam().getClass());//Proxy가 생김.
+		
+		System.out.println("=========================");
+		System.out.println("teamName = "+m.getTeam().getName());; //이때  프록시 초기화 
+		
+		System.out.println("=========================");
+		
+	}
+
+
+	private static void LazyLoding(EntityManager em, EntityManagerFactory emf) {
+		// 지연로딩은 실제 team을 사용하는 시점에 초기화(중요)
+
+//			Member객체에 ManyToOne의 fetch 전략을 Lazy로 setting해줘야 지연로딩 		
+//		   @ManyToOne(fetch = FetchType.LAZY)
+//		    @JoinColumn(name = "TEAM_ID")
+//		    private Team team;
+		
+		Member member1 = new Member();
+		Team team = new Team();
+		team.setName("teamA");
+		em.persist(team);
+		
+		member1.setTeam(team);
+		member1.setName("member1");
+		
+		em.persist(member1);
+		
+
+		em.flush();
+		em.clear();
+		
+		Member m = em.find(Member.class, member1.getId());
+		System.out.println("m = " + m.getTeam().getClass());//실제 객체가 넘오옴.
 		
 		System.out.println("=========================");
 		m.getTeam().getName(); //이때  프록시 초기화 
