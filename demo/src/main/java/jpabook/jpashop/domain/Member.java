@@ -5,10 +5,15 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+
+import org.hibernate.annotations.ManyToAny;
 
 @Entity
 public class Member extends BaseEntity {
@@ -21,8 +26,20 @@ public class Member extends BaseEntity {
     private String city;
     private String street;
     private String zipcode;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "TEAM_ID")
+    private Team team;
 
-    @OneToMany(mappedBy = "member")
+    public Team getTeam() {
+		return team;
+	}
+
+	public void setTeam(Team team) {
+		this.team = team;
+	}
+
+	@OneToMany(mappedBy = "member")
     private List<Order> orders = new ArrayList<>();
 
     public Long getId() {
