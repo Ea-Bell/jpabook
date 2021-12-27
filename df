@@ -1,0 +1,41 @@
+[33mcommit 07ee6df18644fb0833150ca4323869baaea99ea9[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Ea-Bell <cjp975@naver.com>
+Date:   Tue Dec 7 17:19:24 2021 +0900
+
+    Mapped Superclass-매핑 정보 '상속'으로 공통 속성을 넣어준다.
+
+[33mcommit 7b2a0b6ba3c25f1ef3664587c708181f402248dc[m
+Author: Ea-Bell <cjp975@naver.com>
+Date:   Tue Dec 7 17:13:27 2021 +0900
+
+    조인테이블 연습
+
+[33mcommit d449d51c14a2b652f32496f9afc164c0d19e32e3[m
+Author: Ea-Bell <cjp975@naver.com>
+Date:   Tue Dec 7 17:13:04 2021 +0900
+
+    싱글테이블 연습
+
+[33mcommit c162c4e0112fee89a6b1ac18781171bdc774b237[m
+Author: Ea-Bell <cjp975@naver.com>
+Date:   Tue Dec 7 16:11:43 2021 +0900
+
+    다양한 연관관계 매핑(예제완)
+
+[33mcommit 7ab0f299e3779cc345830fbf8e0075f7cc8dee01[m
+Author: Ea-Bell <cjp975@naver.com>
+Date:   Tue Dec 7 15:31:27 2021 +0900
+
+    연관관계 매핑 연습
+
+[33mcommit 0360a22dd9d82de1f95be22ecbd3544381773f93[m
+Author: Ea-Bell <cjp975@naver.com>
+Date:   Wed Nov 24 16:55:17 2021 +0900
+
+    jpa기본편
+
+[33mcommit 8c286ca2b276af34959d4ff99dfbe35969e2528d[m
+Author: Ea-Bell <cjp975@naver.com>
+Date:   Wed Nov 24 16:54:21 2021 +0900
+
+    first commit
