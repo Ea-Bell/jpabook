@@ -1,5 +1,6 @@
 package jpabook.jpashop;
 
+import javax.persistence.Embedded;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
@@ -8,7 +9,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Persistence;
 
-
+import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.Book;
 import jpabook.jpashop.domain.Child;
 import jpabook.jpashop.domain.Member;
@@ -23,10 +24,10 @@ public class JpaMain {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         tx.begin();
-        try {  
+        try {   
         	
-        ProxyAssociation_08(em, emf);
-        
+        //ProxyAssociation_08(em, emf);
+        ValueType_09(em, emf);
             tx.commit();
         } catch (Exception e) {
             tx.rollback();
@@ -37,8 +38,43 @@ public class JpaMain {
         emf.close();
     }
     
-     
-    /**
+/**
+ * 09 값 타입.
+ */
+    private static void ValueType_09(EntityManager em, EntityManagerFactory emf) {
+		
+    	
+		Embedded(em, emf); //임베디드 설정.
+		
+	}
+
+
+
+	private static void Embedded(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * @Embeddable: 값 타입을 "정의"하는 곳에 표시 -> 반드시 "빈" 생성자를 생성해야한다.
+		 * @Embedded: 값 타입을 "사용"하는 곳에 표시
+		 * 
+		 */
+		
+		/**
+		 * 임베디드 타입은 엔티티의 값일 뿐이다.
+		 * 임베디드 타입을 사용하기 전화 후에 매핑하는 테이블은 같다.
+		 * 객체와 테이블을 아주 세밀하게 매핑하는 것이 가능
+		 * 잘 설계한 ORM 애플리케이션은 매핑한 테이블의 수보다 클래스의 수가 더 많음.
+		 */
+		
+		
+		Member member = new Member();
+		member.setName("hello");
+		member.setAddress(new Address("city", "street", "10000"));
+		
+		em.persist(member);
+		
+	}
+
+
+	/**
      * 08 프록시와 연관관계 관리 
      **/
 	private static void ProxyAssociation_08(EntityManager em, EntityManagerFactory emf) {
@@ -63,7 +99,7 @@ public class JpaMain {
 //===============================
 		// 영속성 전이(cascade)와 고아객체		
 		//Cascade(em);
-		Orphan(em);
+		//Orphan(em);
 		
 
 		
