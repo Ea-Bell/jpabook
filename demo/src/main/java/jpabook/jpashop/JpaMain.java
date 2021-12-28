@@ -1,5 +1,8 @@
 package jpabook.jpashop;
 
+import java.util.List;
+import java.util.Set;
+
 import javax.persistence.Embedded;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -10,6 +13,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Persistence;
 
 import jpabook.jpashop.domain.Address;
+import jpabook.jpashop.domain.AddressEntity;
 import jpabook.jpashop.domain.Book;
 import jpabook.jpashop.domain.Child;
 import jpabook.jpashop.domain.Member;
@@ -37,19 +41,115 @@ public class JpaMain {
         }
         emf.close();
     }
-    
+     
 	/**
 	 * 09 값 타입.
+	 * 정리
+	 *  값 타입은 정말 값 타입이라 판단될 때만 사용
+	 *  엔티티와 값 타입을 혼동해서 엔티티를 값 타입으로 만들면 안됨
+	 *  식별자가 필요하고, 지속해서 값을 추적, 변경해야 한다면 그것은 값 타입이 아닌 엔티티!(중요!)
 	 */
     private static void ValueType_09(EntityManager em, EntityManagerFactory emf) {
 		
     	
 		//Embedded(em, emf); //임베디드 설정.
-		ValueTypeAndImmutableObject(em, emf);//값 타입과 불변 객체
-		//값 타입 비교는 ValueTpyeCompared.class에서 확인하는게 좋다.
+		//ValueTypeAndImmutableObject(em, emf);//값 타입과 불변 객체
+		//값 타입 비교는 ValueTpyeCompared_09_.class에서 확인하는게 좋다.
+		ValueTypeCollection(em, emf);     // 값 타입 컬렉션사용.
 	}
 
 
+
+	private static void ValueTypeCollection(EntityManager em, EntityManagerFactory emf) {
+		/** 값 타입 컬렉션은 쓰면 안된다.(중요!!!! 매우 매우 중요!!!!)
+		 * 값 타입의 컬렉션의 제약사항
+		 *  값 타입은 엔티티와 다르게 식별자 개념이 없다.
+		 *  값은 변경하면 추적이 어렵다
+		 *  값 타입 컬렉션에 변경 사항이 발생하면, 주인 엔티티와 연관된 모든 데이터를 삭제하고, 값 타입 컬렉션에 있는 현재 값을 모두 다시 저장한다.(중요!)
+		 *  값 타입 컬렉션을 매핑하는 테이블은 모든 컬럼을 묶어서 기본키를 구성해야함: null X, 중복 저장 X
+		 */
+		
+		Member member= ValueTypeCollectionAdd(em, emf); //추가
+		ValueTypeCollectionSelect(em, emf, member); //검색
+		ValueTypeCollectionModify(em, emf, member); //수정하기.
+		
+		
+		
+		/**
+		 * 값 타입 컬렉션 대안
+		 *  실무에서는 상황에 따라 값 타입 컬렉션 대신에 일대다 관계를 고려
+		 *  일대다 관계를 위한 엔티티를 만들고, 여기에서 값 타입을 사용
+		 *  영속성 전이+고아 객체 제거를 사용해서 값 타입 컬렉션 처럼 사용!
+		 *  EX)AddressEntitiy
+		 */
+		
+	
+		
+		
+		
+	}
+
+	private static void ValueTypeCollectionModify(EntityManager em, EntityManagerFactory emf, Member member) {
+		/*
+		 * 값타입의 수정은 갈아껴줘야한다.
+		 * 
+		 * 수정할 영속성을 찾아서 수정시켜야 한다.
+		 */
+		
+		Member findMember= em.find(Member.class, member.getId());
+		Address oldAddress = findMember.getAddress();
+		findMember.setAddress(new Address("newCity", oldAddress.getStreet(), oldAddress.getZipcode()));
+		
+		
+		//치킨 -> 한식
+		//언제나 생각하자 임베디드 타입은 무조건 값을 삭제해서 다시 집어 넣거나, 아니면 통째로 바꿔줘야한다는것!
+		findMember.getFavoriteFoods().remove("치킨");
+		findMember.getFavoriteFoods().add("한식");
+				
+		//매우 중요! 컬렉션에서 객체 타입은 boolean으로 찾는데 boolean은 equals로 찾는다. 그래서 equals를 정의를 해줘야 값을 삭제와 추가를 오류 없이 할 수 있다.
+//		findMember.getAddressesHistory().remove(new Address("old1", "street", "10000"));
+//		findMember.getAddressesHistory().add(new Address("NewCity1", "street", "10000"));
+		
+	}
+
+	private static void ValueTypeCollectionSelect(EntityManager em, EntityManagerFactory emf, Member member) {
+		em.flush();
+		em.clear();
+		
+		System.out.println("=============START==================");
+		member = em.find(Member.class, member.getId());
+		
+//		List<AddressEntity> addressHistory=member.getAddressesHistory();		
+//		for(AddressEntity address: addressHistory) {
+//			System.out.println("address = " + address.getAddress().getCity());
+//		}
+		
+		Set<String> favoriteFoods=member.getFavoriteFoods();
+		for(String favoriteFood: favoriteFoods)
+		{
+			System.out.println("favoriteFood = " + favoriteFood);
+		}		
+	}
+
+	private static Member ValueTypeCollectionAdd(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 값 타입 저장 
+		 */
+		Member member = new Member();
+		 member.setName("member1");
+		 member.setAddress(new Address("homeCity", "street", "10000"));
+		 
+		 member.getFavoriteFoods().add("치킨");
+		 member.getFavoriteFoods().add("족발");
+		 member.getFavoriteFoods().add("피자");
+		 
+		 member.getAddressesHistory().add(new AddressEntity("old1", "street", "10000"));
+		 member.getAddressesHistory().add(new AddressEntity("old2", "street", "10000"));
+		 
+		 em.persist(member);
+		 
+		 return member;	
+	}
 
 	private static void ValueTypeAndImmutableObject(EntityManager em, EntityManagerFactory emf) {
 		/**
@@ -66,11 +166,7 @@ public class JpaMain {
 		member1.setName("member1");
 		member1.setAddress(address);
 		em.persist(member1);
-		
-	
-		
-		
-		
+			
 		//문제사항 발생 개발자는 member1의 주소를 바꿀려고 하는데 결과가 다르게 나옴(사이드 이펙트 발생) 
 		//해결방한. Address의 객체를 새롭게 만든다.
 		//이렇게 하는 이유는 값을 변경할때는 통째로 변경 하기 때문이다.
@@ -96,16 +192,13 @@ public class JpaMain {
 		 * 객체와 테이블을 아주 세밀하게 매핑하는 것이 가능
 		 * 잘 설계한 ORM 애플리케이션은 매핑한 테이블의 수보다 클래스의 수가 더 많음.
 		 */
-		
-		
+			
 		Member member = new Member();
 		member.setName("hello");
 		member.setAddress(new Address("city", "street", "10000"));
-		
 		em.persist(member);
 		
 	}
-
 
 	/**
      * 08 프록시와 연관관계 관리 
@@ -250,7 +343,6 @@ public class JpaMain {
 		
 		em.persist(member1);
 		
-
 		em.flush();
 		em.clear();
 		
@@ -272,34 +364,27 @@ public class JpaMain {
 
         em.flush();
         em.clear();
-        
-        
+                
         Member refMember= em.getReference(Member.class, member5.getId());
        
         System.out.println("isLoaded= "+ emf.getPersistenceUnitUtil().isLoaded(refMember));
-
-        
+       
         refMember.getName(); //강제 호출로 영속성 추가.
 		em.detach(refMember);
 		
 		System.out.println("isLoaded= "+ emf.getPersistenceUnitUtil().isLoaded(refMember));
 		
-		//System.out.println("detach된 reference = "+ refMember.getName()); //관리가 안되므로 에러가 나온다.
-		
-	
+		//System.out.println("detach된 reference = "+ refMember.getName()); //관리가 안되므로 에러가 나온다.	
 	}
 
 	public static void ValueCompare(EntityManager em) {
-		
-		
-		
+
 		/**
 		 *  키 포인트! 
 		 *  getReference의 반환된 클래스와
 		 *  find의 반환된 클래스는 같다!
 		 */
-		
-		
+			
 	       Member member3 = new Member();
 	         Member member4 = new Member();
 	         em.persist(member3);
@@ -309,8 +394,7 @@ public class JpaMain {
 	         em.clear();
 	         Member m1_1=em.getReference(Member.class, member3.getId());
 	         Member reference = em.find(Member.class, member3.getId());
-	                 
-		
+	                 		
 		System.out.println("reference = " + reference.getClass());
 		System.out.println("m1_1 = " + m1_1.getClass());
 		
@@ -331,20 +415,17 @@ public class JpaMain {
         Member member2 = new Member();
         member2.setName("member2");
         em.persist(member2);
-        
-        
+               
         em.flush();
         em.clear();
         //
         //Member findMember = em.find(Member.class, member.getId());
         Member m1= em.find(Member.class, member1.getId());// Member
         Member m2= em.getReference(Member.class, member2.getId());// Proxy
-		
-		
+				
 		/**
 		 * Proxy또는 영속성으로 관리되는 객체를 instanceof로 비교를 해야한다.
-		 */
-		
+		 */		
 		System.out.println("m1 == Member : "+ (m1 instanceof Member));
 		System.out.println("m2 == Member : "+ (m2 instanceof Member));
 		System.out.println("m1 == m2 : "+ (m1 == m2));

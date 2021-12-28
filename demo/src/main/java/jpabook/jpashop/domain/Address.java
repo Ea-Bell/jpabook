@@ -1,28 +1,35 @@
 package jpabook.jpashop.domain;
 
+import java.util.Objects;
+
+import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
 public class Address {
 
-	
+	@Column(length = 10)
     private String city;
+	@Column(length = 20)
     private String street;
+	@Column(length = 5)
     private String zipcode;
     
     
     
-	public Address() {	
+	protected Address() {	
 	}
 	
 	public Address(String city, String street, String zipcode) {
-		super();
+		
 		this.city = city;
 		this.street = street;
 		this.zipcode = zipcode;
 	}
 
-
+	public String fullAddress() {
+		return getCity() + " " + getStreet() + " " +  getZipcode();
+	}
 
 	public String getCity() {
 		return city;
@@ -36,14 +43,33 @@ public class Address {
 		return zipcode;
 	}
 
+	/**
+	 * @param city the city to set
+	 */
+	private void setCity(String city) {
+		this.city = city;
+	}
+
+	/**
+	 * @param street the street to set
+	 */
+	private void setStreet(String street) {
+		this.street = street;
+	}
+
+	/**
+	 * @param zipcode the zipcode to set
+	 */
+	private void setZipcode(String zipcode) {
+		this.zipcode = zipcode;
+	}
+
+	
+	
+	//웬만하면 getter로 써야한다. 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((city == null) ? 0 : city.hashCode());
-		result = prime * result + ((street == null) ? 0 : street.hashCode());
-		result = prime * result + ((zipcode == null) ? 0 : zipcode.hashCode());
-		return result;
+		return Objects.hash(getCity(), getStreet(), getZipcode());
 	}
 
 	@Override
@@ -55,25 +81,18 @@ public class Address {
 		if (getClass() != obj.getClass())
 			return false;
 		Address other = (Address) obj;
-		if (city == null) {
-			if (other.city != null)
-				return false;
-		} else if (!city.equals(other.city))
-			return false;
-		if (street == null) {
-			if (other.street != null)
-				return false;
-		} else if (!street.equals(other.street))
-			return false;
-		if (zipcode == null) {
-			if (other.zipcode != null)
-				return false;
-		} else if (!zipcode.equals(other.zipcode))
-			return false;
-		return true;
+		return Objects.equals(getCity(), other.city) && Objects.equals(getStreet(), other.street)
+				&& Objects.equals(getZipcode(), other.zipcode);
 	}
+
+
+
+
+	
+	
+
+   
 	
 	
 	
-    
 }

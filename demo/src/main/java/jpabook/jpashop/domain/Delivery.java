@@ -2,6 +2,7 @@ package jpabook.jpashop.domain;
 
 import java.util.ArrayList;
 
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -16,11 +17,46 @@ public class Delivery extends BaseEntity {
     @GeneratedValue
     private Long id;
 
-    private String city;
-    private String street;
-    private String zipcode;
+    @Embedded
+    private Address address;
     private DeliveryStatus status;
 
     @OneToOne(mappedBy = "delivery", fetch = FetchType.LAZY)
     private Order order;
+
+	private Long getId() {
+		return id;
+	}
+
+	private void setId(Long id) {
+		this.id = id;
+	}
+
+	private Address getAddress() {
+		return address;
+	}
+
+	private void setAddress(Address address) {
+		this.address = address;
+	}
+
+	private DeliveryStatus getStatus() {
+		return status;
+	}
+
+	private void setStatus(DeliveryStatus status) {
+		this.status = status;
+	}
+
+	private Order getOrder() {
+		return order;
+	}
+
+	private void setOrder(Order order) {
+		this.order = order;
+	}
+    
+    
+    
+    
 }
