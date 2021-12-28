@@ -1,23 +1,25 @@
-package jpabook.jpashop.domain;
+package jpql;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 @Entity
-public class Child {
+public class Team {
+
 	@Id
 	@GeneratedValue
 	private Long id;
 	private String name;
+	
+	@OneToMany(mappedBy = "team")
+	private List<Member> member= new ArrayList<>();
 
-	@ManyToOne
-	@JoinColumn(name = "parent_id" )
-	private Parent parent;
-	
-	
 	public Long getId() {
 		return id;
 	}
@@ -34,13 +36,15 @@ public class Child {
 		this.name = name;
 	}
 
-	public Parent getParent() {
-		return parent;
+	public List<Member> getMember() {
+		return member;
 	}
 
-	public void setParent(Parent parent) {
-		this.parent = parent;
+	public void setMember(List<Member> member) {
+		this.member = member;
 	}
+
+	
 	
 	
 }
