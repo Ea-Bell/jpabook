@@ -38,17 +38,50 @@ public class JpaMain {
         emf.close();
     }
     
-/**
- * 09 값 타입.
- */
+	/**
+	 * 09 값 타입.
+	 */
     private static void ValueType_09(EntityManager em, EntityManagerFactory emf) {
 		
     	
-		Embedded(em, emf); //임베디드 설정.
+		//Embedded(em, emf); //임베디드 설정.
+		ValueTypeAndImmutableObject(em, emf);//값 타입과 불변 객체
 		
 	}
 
 
+
+	private static void ValueTypeAndImmutableObject(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 객체 타입의 한계
+		 *  항상 값을 복사해서 사용하면 공유 참조로 인해 발생하는 부작용을 피할 수 있다.
+		 *  문제는 임베디드 타입처럼 직접 정의한 값 타입은 자바의 "기본" 타입이 아니라 "객체" 타입니다.
+		 *  자바 기본 타입에 값을 대입하면 값을 복사한다.
+		 *  객체 타입은 참조 값을 직접 대입하는 것을 막을 방법이 없다.
+		 *  객체의 공유 참조는 피할 수 없다.
+		 **/
+		Address address = new Address("city", "street", "10000");
+		
+		Member member1= new Member();
+		member1.setName("member1");
+		member1.setAddress(address);
+		em.persist(member1);
+		
+	
+		
+		
+		
+		//문제사항 발생 개발자는 member1의 주소를 바꿀려고 하는데 결과가 다르게 나옴(사이드 이펙트 발생) 
+		//해결방한. Address의 객체를 새롭게 만든다.
+		//이렇게 하는 이유는 값을 변경할때는 통째로 변경 하기 때문이다.
+		Address copyAdress  = new Address("NewCity", address.getStreet(), address.getZipcode());
+		
+		Member member2 =new Member();
+		member2.setName("member2");
+		member2.setAddress(copyAdress);
+		em.persist(member2);
+		
+	}
 
 	private static void Embedded(EntityManager em, EntityManagerFactory emf) {
 		/**
