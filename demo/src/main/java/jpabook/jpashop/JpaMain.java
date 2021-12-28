@@ -31,7 +31,8 @@ public class JpaMain {
         try {   
         	
         //ProxyAssociation_08(em, emf);
-        ValueType_09(em, emf);
+        //ValueType_09(em, emf);
+         ObjectOrientedQueryLanguage_10(em, emf);
             tx.commit();
         } catch (Exception e) {
             tx.rollback();
@@ -42,6 +43,47 @@ public class JpaMain {
         emf.close();
     }
      
+	private static void ObjectOrientedQueryLanguage_10(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 
+		 * JPA를 우회해서 SQL을 실행하기 직전에 영속성 컨텍스트 수동 플러시
+		 * 플러시시점은 = commit과 sql문이 날라갈때 flush()가 나온다고함.
+		 */
+		
+		Jpql(em, emf);
+		QueryDSL(em, emf);//<<<이게 목표다.
+	}
+
+	private static void QueryDSL(EntityManager em, EntityManagerFactory emf) {
+		
+		/**
+		 * QueryDSL 
+		 *  문자가 아닌 자바코드로 JPQL을 작성할 수 있음
+		 *  JPQL빌더 역할
+		 *  컴파일 시점에 문법 오류를 찾을 수 있음
+		 *  동적쿼리 작성 편리함
+		 *  단순하고 쉬움
+		 *  실무 사용권장!
+		 */
+		
+	}
+
+	private static void Jpql(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * JPQL
+		 *  테이블이 아닌 객체를 대상으로 검색하는 객체 지향 쿼리
+		 *  SQL을 추상화해서 특정 데이터베이스 SQL에 의존X
+		 *  JPQL을 한마디로 정의하면 객체 지향 SQL
+		 *  http://querydsl.com/static/querydsl/5.0.0/reference/html_single/#jpa_integration
+		 *  
+		 */
+		List<Member>result=em.createQuery("select m From Member m where m.name like '%kim%'",Member.class).getResultList();
+		for(Member member : result) {
+			System.out.println("member = "+ member);
+		}
+		
+	}
+
 	/**
 	 * 09 값 타입.
 	 * 정리
@@ -50,15 +92,12 @@ public class JpaMain {
 	 *  식별자가 필요하고, 지속해서 값을 추적, 변경해야 한다면 그것은 값 타입이 아닌 엔티티!(중요!)
 	 */
     private static void ValueType_09(EntityManager em, EntityManagerFactory emf) {
-		
-    	
+		  	
 		//Embedded(em, emf); //임베디드 설정.
 		//ValueTypeAndImmutableObject(em, emf);//값 타입과 불변 객체
 		//값 타입 비교는 ValueTpyeCompared_09_.class에서 확인하는게 좋다.
-		ValueTypeCollection(em, emf);     // 값 타입 컬렉션사용.
+		//ValueTypeCollection(em, emf);     // 값 타입 컬렉션사용.
 	}
-
-
 
 	private static void ValueTypeCollection(EntityManager em, EntityManagerFactory emf) {
 		/** 값 타입 컬렉션은 쓰면 안된다.(중요!!!! 매우 매우 중요!!!!)
@@ -72,8 +111,7 @@ public class JpaMain {
 		Member member= ValueTypeCollectionAdd(em, emf); //추가
 		ValueTypeCollectionSelect(em, emf, member); //검색
 		ValueTypeCollectionModify(em, emf, member); //수정하기.
-		
-		
+			
 		
 		/**
 		 * 값 타입 컬렉션 대안
@@ -81,11 +119,7 @@ public class JpaMain {
 		 *  일대다 관계를 위한 엔티티를 만들고, 여기에서 값 타입을 사용
 		 *  영속성 전이+고아 객체 제거를 사용해서 값 타입 컬렉션 처럼 사용!
 		 *  EX)AddressEntitiy
-		 */
-		
-	
-		
-		
+		 */	
 		
 	}
 
