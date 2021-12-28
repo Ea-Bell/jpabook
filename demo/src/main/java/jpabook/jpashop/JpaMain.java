@@ -46,7 +46,7 @@ public class JpaMain {
     	
 		//Embedded(em, emf); //임베디드 설정.
 		ValueTypeAndImmutableObject(em, emf);//값 타입과 불변 객체
-		
+		//값 타입 비교는 ValueTpyeCompared.class에서 확인하는게 좋다.
 	}
 
 
