@@ -12,8 +12,6 @@ import javax.persistence.TypedQuery;
 
 public class JpqlMain {
 
-	private static String query;
-
 	public static void main(String[] args) {
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
 
@@ -31,8 +29,7 @@ public class JpqlMain {
 			em.close();
 		}
 		emf.close();
-		
-		
+
 	}
 
 	private static void ObjectOrientedQueryLanguage_10(EntityManager em, EntityManagerFactory emf) {
@@ -41,52 +38,136 @@ public class JpqlMain {
 		 * 나온다고함.
 		 */
 
-//		Jpql(em, emf);
-//		QueryDSL(em, emf);//<<<이게 목표다.
-//		Paging(em, emf);
-//		Joins(em, emf);
-//		SubQuery(em, emf);
-//		JpqlTypeRepresent(em, emf);
-		ConditionalRepresent(em, emf);
-	
+		// Jpql(em, emf);
+		// QueryDSL(em, emf);//<<<이게 목표다.
+		// Paging(em, emf);
+		// Joins(em, emf);
+		// SubQuery(em, emf);
+		// JpqlTypeRepresent(em, emf);
+		// ConditionalRepresent(em, emf);
+		JpqlBaseFunction(em, emf);
 	}
 
-	
+	private static void JpqlBaseFunction(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * JPQL 기본 함수
+		 * CONCAT 문자열 더하기
+		 * SUBSTRING 문자열을 x번 부터 x번 까지 짜르기.
+		 * TRIM
+		 * LOWER, UPPER
+		 * LENGTH
+		 * LOCATE
+		 * ABS, SQRT, MOD
+		 * SIZE, INDEX(JPA 용도)
+		 */
+
+		/**
+		 * 사용자 정의 함수 호출
+		 * 하이버네이트는 사용전 방언에 추가해야 한다.
+		 * 사용하는 DB방언을 상속 받고, 사용자 저으이 함수를 등록한다.
+		 * select function ('group_concat', i.name) from Item i
+		 */
+
+		// BaseFunction(em, emf);
+		UserDefinedFunction(em, emf);
+	}
+
+	private static void UserDefinedFunction(EntityManager em, EntityManagerFactory emf) {
+		//각 DB에 선언된 사용자 정의 함수를 불러오는 거임!!! 만약 사용할꺼면 DB에 사용자 정의 함수 만들어서 불러와!!!!
+		
+		
+		Team team = new Team();
+		team.setName("teamA");
+		em.persist(team);
+
+		Member member1 = new Member();
+		member1.setUsername("관리자1");
+
+		em.persist(member1);
+		Member member2 = new Member();
+		member2.setUsername("관리자2");
+
+		em.persist(member2);
+
+		em.flush();
+		em.clear();
+
+
+		
+		String userFunction = "select group_concat(m.username) from Member m";
+		List<String> resultList = em.createQuery(userFunction, String.class)
+				.getResultList();
+		for (String string : resultList) {
+			System.out.println("s : " + string);
+		}
+	}
+
+	private static void BaseFunction(EntityManager em, EntityManagerFactory emf) {
+		Team team = new Team();
+		team.setName("teamA");
+		em.persist(team);
+
+		Member member = new Member();
+		member.setUsername("관리자");
+		member.setAge(10);
+		member.setType(MemberType.ADMIN);
+
+		em.persist(member);
+
+		em.flush();
+		em.clear();
+
+		String conCatQuery = "select concat ('a','b') from Member m";
+		String subStringQuery = "select substring(m.username, 2,3) from Member m";
+
+		List<String> resultList = em.createQuery(subStringQuery, String.class).getResultList();
+		// for (String string : resultList) {
+		// System.out.println("s = " + string);
+		// }
+
+		/// 밑에는 interger형들.
+		String locateQuery = "select locate('de','abcdefg') from Member m"; // >>반환값은 int로 위치값을 반환해준다.
+		String sizeQuery = "select size(t.member) from Team t";
+		List<Integer> intResultList = em.createQuery(sizeQuery, Integer.class).getResultList();
+		for (Integer string : intResultList) {
+			System.out.println("s = " + string);
+		}
+
+	}
+
 	private static void ConditionalRepresent(EntityManager em, EntityManagerFactory emf) {
-	/**
-	 *  조건식 -case 식
-	 * 
-	 *   기본 case 식
-	 *    select 
-	 * 		case when m.age <= 10 then '학생요금'
-	 * 			 when m.age >= 60 then '경로요금'
-	 * 			else '일반요금'
-	 * 		end
-	 * from Member m
-	 * 
-	 * 	단순 case 식
-	 * 	  select 
-	 * 		case t.name
-	 * 			when '팀A' then '인센티브110%'
-	 * 			when '팀B' then '인센티브120%'
-	 * 			else '인센티브 105%'
-	 * 		end
-	 * from Team t
-	 * 
-	 * COALESCE: 하나씩 조회해서 nulldㅣ 아니면 반환
-	 * 	사용자 이름이 없으면 이름 없는 회원을 반환
-	 * 	 select coalesce(m.username, '이름 없는 회원') from Member m
-	 * 
-	 * NUllIF: 두 값이 같으면 null 반환, 다르면 첫번쨰 값 반환
-	 *  사용자 이름이 '관리자'면 null을 반환하고 나머지는 본인의 이름을 반환
-	 *   select nullif(m.username, '관리자') from Member m
-	 */
+		/**
+		 * 조건식 -case 식
+		 * 
+		 * 기본 case 식
+		 * select
+		 * case when m.age <= 10 then '학생요금'
+		 * when m.age >= 60 then '경로요금'
+		 * else '일반요금'
+		 * end
+		 * from Member m
+		 * 
+		 * 단순 case 식
+		 * select
+		 * case t.name
+		 * when '팀A' then '인센티브110%'
+		 * when '팀B' then '인센티브120%'
+		 * else '인센티브 105%'
+		 * end
+		 * from Team t
+		 * 
+		 * COALESCE: 하나씩 조회해서 nulldㅣ 아니면 반환
+		 * 사용자 이름이 없으면 이름 없는 회원을 반환
+		 * select coalesce(m.username, '이름 없는 회원') from Member m
+		 * 
+		 * NUllIF: 두 값이 같으면 null 반환, 다르면 첫번쨰 값 반환
+		 * 사용자 이름이 '관리자'면 null을 반환하고 나머지는 본인의 이름을 반환
+		 * select nullif(m.username, '관리자') from Member m
+		 */
 
-	//BaseIf(em, emf);
-	// Coalesce(em, emf);
-	Nullif(em, emf);
-
-
+		// BaseIf(em, emf);
+		// Coalesce(em, emf);
+		Nullif(em, emf);
 
 	}
 
@@ -95,26 +176,24 @@ public class JpqlMain {
 		team.setName("teamA");
 		em.persist(team);
 
-
-
 		Member member = new Member();
 		member.setUsername("관리자");
 		member.setAge(10);
 		member.setType(MemberType.ADMIN);
-		
+
 		em.persist(member);
 
 		em.flush();
 		em.clear();
 
 		// 무언가를 숨길 때 nullif가 쓰인다.
-		String query= "select nullif(m.username, '관리자') as username" +
-		" from Member m";
-			List<String> resultList = em.createQuery(query, String.class).getResultList();
+		String query = "select nullif(m.username, '관리자') as username" +
+				" from Member m";
+		List<String> resultList = em.createQuery(query, String.class).getResultList();
 
-			for (String string : resultList) {
-				System.out.println("s = " + string);
-			}
+		for (String string : resultList) {
+			System.out.println("s = " + string);
+		}
 	}
 
 	private static void Coalesce(EntityManager em, EntityManagerFactory emf) {
@@ -122,24 +201,22 @@ public class JpqlMain {
 		team.setName("teamA");
 		em.persist(team);
 
-
-
 		Member member = new Member();
 		member.setUsername(null);
 		member.setAge(10);
 		member.setType(MemberType.ADMIN);
-		
+
 		em.persist(member);
 
 		em.flush();
 		em.clear();
 
-		String query ="select coalesce(m.username, '이름 없는 회원') as username from Member m";
+		String query = "select coalesce(m.username, '이름 없는 회원') as username from Member m";
 
-				List<String> resultList = em.createQuery(query, String.class).getResultList();
-				for (String string : resultList) {
-					System.out.println("s = " + string);
-				}
+		List<String> resultList = em.createQuery(query, String.class).getResultList();
+		for (String string : resultList) {
+			System.out.println("s = " + string);
+		}
 	}
 
 	private static void BaseIf(EntityManager em, EntityManagerFactory emf) {
@@ -147,168 +224,154 @@ public class JpqlMain {
 		team.setName("teamA");
 		em.persist(team);
 
-
-
 		Member member = new Member();
 		member.setUsername("member1");
 		member.setAge(10);
 		member.setType(MemberType.ADMIN);
-		
+
 		em.persist(member);
 
 		em.flush();
 		em.clear();
 
-		String query = 
-						"select " +
-						"case when m.age <= 10 then '학생요금'" +
-						"	  when m.age >= 60 then '경로요금'" +
-						"	  else '일반요금' " +
-						" end " +
-						" from Member m";
-		 List<String> resultList = em.createQuery(query, String.class).getResultList();
+		String query = "select " +
+				"case when m.age <= 10 then '학생요금'" +
+				"	  when m.age >= 60 then '경로요금'" +
+				"	  else '일반요금' " +
+				" end " +
+				" from Member m";
+		List<String> resultList = em.createQuery(query, String.class).getResultList();
 
-			for (String s : resultList) {
-				System.out.println("s = " +s);
-			}
+		for (String s : resultList) {
+			System.out.println("s = " + s);
+		}
 
 	}
 
 	private static void JpqlTypeRepresent(EntityManager em, EntityManagerFactory emf) {
-	/**
-	 * JPQL 타입 표현
-	 *  문자: 'HELLO', 'She''s'
-	 *  숫자: 10L(Long), 10D(Double), 10F(Float)
-	 *  Boolean: TRUE, FALSE
-	 *  ENUM: jpabook.MemberType.Admin(패키지명 포함)
-	 *  엔티티 타입: TYPE(m) = Member(상속 관계에서 사용)
-	 */
+		/**
+		 * JPQL 타입 표현
+		 * 문자: 'HELLO', 'She''s'
+		 * 숫자: 10L(Long), 10D(Double), 10F(Float)
+		 * Boolean: TRUE, FALSE
+		 * ENUM: jpabook.MemberType.Admin(패키지명 포함)
+		 * 엔티티 타입: TYPE(m) = Member(상속 관계에서 사용)
+		 */
 
 		Team team = new Team();
 		team.setName("teamA");
 		em.persist(team);
 
-
-
 		Member member = new Member();
 		member.setUsername("member1");
 		member.setAge(10);
 		member.setType(MemberType.ADMIN);
-		
+
 		em.persist(member);
 
 		em.flush();
 		em.clear();
-		
+
 		String query = "select m.username, 'HELLO', TRUE FROM Member m " +
-		                "where m.type= jpql.MemberType.ADMIN";
+				"where m.type= jpql.MemberType.ADMIN";
 		String errorQuery = "select m.username, 'HELLO', TRUE FROM Member m " +
-		"where m.type= jpql.MemberType.USER";
+				"where m.type= jpql.MemberType.USER";
 
+		List<Object[]> result = em.createQuery(errorQuery).getResultList();
 
-		
-		List <Object[]>result = em.createQuery(errorQuery).getResultList();
+		// for(Object[] objects: result){
+		// System.out.println("object = " + objects[0]);
+		// System.out.println("object = " + objects[1]);
+		// System.out.println("object = " + objects[2]);
 
-				// for(Object[] objects: result){
-				// 	System.out.println("object = " + objects[0]);
-				// 	System.out.println("object = " + objects[1]);
-				// 	System.out.println("object = " + objects[2]);
+		// }
 
-				// }
-
-
-
-				//enumType은 이렇게 씁니다.
-				String paramBind = "select m.username, 'HELLO', TRUE FROM Member m " +
+		// enumType은 이렇게 씁니다.
+		String paramBind = "select m.username, 'HELLO', TRUE FROM Member m " +
 				"where m.type= :userType";
-				List <Object[]>enumTypeList = em.createQuery(paramBind).setParameter("userType", MemberType.ADMIN).getResultList();
+		List<Object[]> enumTypeList = em.createQuery(paramBind).setParameter("userType", MemberType.ADMIN)
+				.getResultList();
 
-				for(Object[] objects: enumTypeList){
-					System.out.println("object = " + objects[0]);
-					System.out.println("object = " + objects[1]);
-					System.out.println("object = " + objects[2]);
-
-				}
-
-		/**
-		 * JPQL 기타
-		 *  SQL과 문법이 같은식
-		 *  EXISTS, IN
-		 *  AND, OR NOT
-		 *  =, >, >=, <, <=, <>
-		 *  BETWEEN, LIKE, IS NULL
-		 */
-
-		String jpqlEx = "select m.username, 'HELLO', TRUE FROM Member m " +
-						"where m.age between 0 and 10";
-		List <Object[]>jpqlExList = em.createQuery(paramBind).setParameter("userType", MemberType.ADMIN).getResultList();
-
-		for(Object[] objects: jpqlExList){
+		for (Object[] objects : enumTypeList) {
 			System.out.println("object = " + objects[0]);
 			System.out.println("object = " + objects[1]);
 			System.out.println("object = " + objects[2]);
 
 		}
 
+		/**
+		 * JPQL 기타
+		 * SQL과 문법이 같은식
+		 * EXISTS, IN
+		 * AND, OR NOT
+		 * =, >, >=, <, <=, <>
+		 * BETWEEN, LIKE, IS NULL
+		 */
+
+		String jpqlEx = "select m.username, 'HELLO', TRUE FROM Member m " +
+				"where m.age between 0 and 10";
+		List<Object[]> jpqlExList = em.createQuery(paramBind).setParameter("userType", MemberType.ADMIN)
+				.getResultList();
+
+		for (Object[] objects : jpqlExList) {
+			System.out.println("object = " + objects[0]);
+			System.out.println("object = " + objects[1]);
+			System.out.println("object = " + objects[2]);
+
+		}
 
 	}
 
 	private static void SubQuery(EntityManager em, EntityManagerFactory emf) {
 		/**
 		 * 서브 쿼리
-		 *  나이가 평균보다 많은 회원
-		 * 	 select m from Member m  where m.age>(select avg(m2.age)from Member m2)
+		 * 나이가 평균보다 많은 회원
+		 * select m from Member m where m.age>(select avg(m2.age)from Member m2)
 		 * 
-		 *  한 건이라도 주문한 고객
-		 * 	 select m from Member m where(select count(o) from Order o hwere m = o.member)>0
+		 * 한 건이라도 주문한 고객
+		 * select m from Member m where(select count(o) from Order o hwere m =
+		 * o.member)>0
 		 */
 
-		 /**
-		  * [NOT]EXISTS (subquery): 서브쿼리에 결과가 존재하면 참
-		  * {ALL | ANY | SOME} (subquery)
-		  *	ALL : 모두 만족하면 참
-		  * ANY, SOME: 같은 의미, 조건을 하나라도 만족하면 참
-		  * [NOT] IN(subquery): 사브쿼리의 결과 중 하나라도 같은 것이 있으면 참
-		  */
+		/**
+		 * [NOT]EXISTS (subquery): 서브쿼리에 결과가 존재하면 참
+		 * {ALL | ANY | SOME} (subquery)
+		 * ALL : 모두 만족하면 참
+		 * ANY, SOME: 같은 의미, 조건을 하나라도 만족하면 참
+		 * [NOT] IN(subquery): 사브쿼리의 결과 중 하나라도 같은 것이 있으면 참
+		 */
 
-		  /**
-		   *  서브쿼리 -예제
-		   * 
-		   * 팀A 소속인 회원
-		   * select m from Member m
-		   * 	where exists(select t from m.team t where t.name ='팀A')
-		   * 
-		   * 전체 상품 각각의 재고보다 주문량이 많은 주문들
-		   * select o from Order o
-		   * 	where o.orderAmount >ALL(select p.stockAmount from Product p)
-		   * 
-		   * 어떤 팀이든 팀에 소속된 회원
-		   * select m from Member m
-		   * 	where m.team =ANY(select t from Team t)
-		   */
+		/**
+		 * 서브쿼리 -예제
+		 * 
+		 * 팀A 소속인 회원
+		 * select m from Member m
+		 * where exists(select t from m.team t where t.name ='팀A')
+		 * 
+		 * 전체 상품 각각의 재고보다 주문량이 많은 주문들
+		 * select o from Order o
+		 * where o.orderAmount >ALL(select p.stockAmount from Product p)
+		 * 
+		 * 어떤 팀이든 팀에 소속된 회원
+		 * select m from Member m
+		 * where m.team =ANY(select t from Team t)
+		 */
 
-		   /**
-			* JPA 서브 쿼리 한계
-			*  JPA는 where, having 절에서만 서브 쿼리 사용 가능
-			*  select 절도 가능(하이버 네이트에서 지원)
-			*  from 절의 서브쿼리는 현재 JPQL에서 불가능  >> 중요!
-			*    조인으로 풀 수 있으면 풀어서 해결
-			* */
-
-
-
-
-
-	
+		/**
+		 * JPA 서브 쿼리 한계
+		 * JPA는 where, having 절에서만 서브 쿼리 사용 가능
+		 * select 절도 가능(하이버 네이트에서 지원)
+		 * from 절의 서브쿼리는 현재 JPQL에서 불가능 >> 중요!
+		 * 조인으로 풀 수 있으면 풀어서 해결
+		 */
 
 	}
 
 	private static void Joins(EntityManager em, EntityManagerFactory emf) {
 
-
-		Team team= new Team();
+		Team team = new Team();
 		team.setName("teamA");
-		
+
 		em.persist(team);
 
 		Member member = new Member();
@@ -321,46 +384,43 @@ public class JpqlMain {
 
 		/**
 		 * 조인
-		 * 	내부 조인:
-		 *   select m from Member m [Inner] join m.team t
-		 *  외부 조인:
-		 *   select m from Member m Left [Outer] Join m.team
-		 * 	세타 조인:(연관 관계 없을때 필요한 조인)
-		 *   select count(m) from Member m , Team t where m.username=t.name
+		 * 내부 조인:
+		 * select m from Member m [Inner] join m.team t
+		 * 외부 조인:
+		 * select m from Member m Left [Outer] Join m.team
+		 * 세타 조인:(연관 관계 없을때 필요한 조인)
+		 * select count(m) from Member m , Team t where m.username=t.name
 		 */
-		//Join(em, emf);
-
+		// Join(em, emf);
 
 		/**
-		 *  조인 on절
-		 * 	 1. 조인 대상 필터링
-		 *   2. 연관관계 없는 엔티티 외부 조인(하이버네이트 5.1부터)
+		 * 조인 on절
+		 * 1. 조인 대상 필터링
+		 * 2. 연관관계 없는 엔티티 외부 조인(하이버네이트 5.1부터)
 		 * 
-		 *  1_1 조인 대상 필터링
-		 *   예) 회원과 팀을 조인하면서, 팀 이름이 A인 팀만 조인
-		 * 	  JPQL:
-		 * 		select m, t from Member m left join m.team t on t.name='A'
-		 * 	  SQL:
-		 * 		selecrt m.*, t.* from
-		 * 		Member m left join Team t on m.TEAM_ID=t.id and t.name='A'
-		 * 	
-		 *  2_1 연관관계 없는 엔티티 외부 조인
-		 * 	 예) 회원의 이름과 팀의 이름이 같은 대상 외부 조인
-		 * 	  JPQL:
-		 * 		select m, t from Member m left join Team t on m.username=t.name
-		 * 	  SQL:
-		 * 		select m.*, t.* from Member m Left join Team t on m.username= t.name
+		 * 1_1 조인 대상 필터링
+		 * 예) 회원과 팀을 조인하면서, 팀 이름이 A인 팀만 조인
+		 * JPQL:
+		 * select m, t from Member m left join m.team t on t.name='A'
+		 * SQL:
+		 * selecrt m.*, t.* from
+		 * Member m left join Team t on m.TEAM_ID=t.id and t.name='A'
+		 * 
+		 * 2_1 연관관계 없는 엔티티 외부 조인
+		 * 예) 회원의 이름과 팀의 이름이 같은 대상 외부 조인
+		 * JPQL:
+		 * select m, t from Member m left join Team t on m.username=t.name
+		 * SQL:
+		 * select m.*, t.* from Member m Left join Team t on m.username= t.name
 		 * 
 		 */
-			
 
-		//조인 대상 필터링
-		//JoinFilter(em, emf);
-			
-		 //연관 관계 없는 대상
+		// 조인 대상 필터링
+		// JoinFilter(em, emf);
+
+		// 연관 관계 없는 대상
 		// NoAssociation(em, emf);
 
- 		 
 	}
 
 	private static void Join(EntityManager em, EntityManagerFactory emf) {
@@ -368,59 +428,57 @@ public class JpqlMain {
 		String innerJoin2 = "select m from Member m join m.team t ";
 		String leftOuterJoin = "select m from Member m left outer join m.team t";
 		String leftOuterJoin2 = "select m from Member m left join m.team t";
-		String setaJoin = "select m from Member m , Team t where m.username=t.name"; //cross라고 나옴!
+		String setaJoin = "select m from Member m , Team t where m.username=t.name"; // cross라고 나옴!
 		List<Member> result = em.createQuery(setaJoin, Member.class)
-							.getResultList();
-		
+				.getResultList();
+
 		System.out.println("result = " + result.size());
 	}
 
 	private static void NoAssociation(EntityManager em, EntityManagerFactory emf) {
-		String noAssociation= "select m from Member m left join Team t on m.username=t.name";
+		String noAssociation = "select m from Member m left join Team t on m.username=t.name";
 		List<Member> onQueryResult = em.createQuery(noAssociation, Member.class)
-		.getResultList();
-		System.out.println("result :"+ onQueryResult.size());
+				.getResultList();
+		System.out.println("result :" + onQueryResult.size());
 	}
 
 	private static void JoinFilter(EntityManager em, EntityManagerFactory emf) {
-		String onQuery= "select m from Member m left join m.team t on t.name= 'teamA'";
+		String onQuery = "select m from Member m left join m.team t on t.name= 'teamA'";
 		List<Member> onQueryResult = em.createQuery(onQuery, Member.class)
-		.getResultList();
-		System.out.println("result :"+ onQueryResult.size());
+				.getResultList();
+		System.out.println("result :" + onQueryResult.size());
 	}
 
 	private static void Paging(EntityManager em, EntityManagerFactory emf) {
-			/**
-			 * 페이징 API
-			 * JPA는 페이징을 다음 두 API로 추상화
-			 * setFirstResult(int start Position): 조회 시작 위치(0부터 시작)
-			 * setMaxResults(int maxResult): 조회할 데이터 수
-			 * 
-			 * 현재 데이터 베이스 방언으로 돌아간다. persistence.xml의 hibernate.dialect의 value값을 바꾸면 각 DB로 맞춰서 쿠리를 짜서 보낸다.
-			 */
-			
-			for(int i= 0; i<100; i++){
-			 Member member = new Member();
-			 member.setUsername("member"+i);
-			 member.setAge(i);
-			 em.persist(member);
-			}
-			 em.flush();
-			 em.clear();
+		/**
+		 * 페이징 API
+		 * JPA는 페이징을 다음 두 API로 추상화
+		 * setFirstResult(int start Position): 조회 시작 위치(0부터 시작)
+		 * setMaxResults(int maxResult): 조회할 데이터 수
+		 * 
+		 * 현재 데이터 베이스 방언으로 돌아간다. persistence.xml의 hibernate.dialect의 value값을 바꾸면 각 DB로
+		 * 맞춰서 쿠리를 짜서 보낸다.
+		 */
 
-			List<Member> result = em.createQuery("select m from Member m order by m.age desc", Member.class)
-						.setFirstResult(1)
-						.setMaxResults(10)
-						.getResultList();
+		for (int i = 0; i < 100; i++) {
+			Member member = new Member();
+			member.setUsername("member" + i);
+			member.setAge(i);
+			em.persist(member);
+		}
+		em.flush();
+		em.clear();
 
-				
-			System.out.println("result.size : "+result.size());
+		List<Member> result = em.createQuery("select m from Member m order by m.age desc", Member.class)
+				.setFirstResult(1)
+				.setMaxResults(10)
+				.getResultList();
 
-			for (Member member1: result){
-				System.out.println("member1 =" + member1);
-			}
+		System.out.println("result.size : " + result.size());
 
-
+		for (Member member1 : result) {
+			System.out.println("member1 =" + member1);
+		}
 
 	}
 
@@ -451,16 +509,17 @@ public class JpqlMain {
 		member.setAge(10);
 		em.persist(member);
 
-//		List<Member>result=em.createQuery("select m From Member m where m.name like '%kim%'",Member.class)
-//							  .getResultList();
-//		
-//		
-//		for(Member members : result) {
-//			System.out.println("member = "+ members);
-//		}
+		// List<Member>result=em.createQuery("select m From Member m where m.name like
+		// '%kim%'",Member.class)
+		// .getResultList();
+		//
+		//
+		// for(Member members : result) {
+		// System.out.println("member = "+ members);
+		// }
 
-//		TypeQueryAndQuery(em, emf, member);
-//		ParamiterBinding(em,emf, member);
+		// TypeQueryAndQuery(em, emf, member);
+		// ParamiterBinding(em,emf, member);
 		Projection(em, emf, member);
 
 	}
@@ -502,45 +561,40 @@ public class JpqlMain {
 		 * 1. Query 타입으로 조회
 		 * 2. Object[]타입으로 조회
 		 * 3. new 명령어로 조회
-		 *  단순 값을 DTO로 바로 조회
-		 *  select new jpabook.jpql.UserDTO(m.username, m.age)from Member m
-		 *  패키지명을 포함한 전체 클래스 명 입력
-		 *  순서와 타입이 일치하는 생성자 필요
+		 * 단순 값을 DTO로 바로 조회
+		 * select new jpabook.jpql.UserDTO(m.username, m.age)from Member m
+		 * 패키지명을 포함한 전체 클래스 명 입력
+		 * 순서와 타입이 일치하는 생성자 필요
 		 */
-		
+
 		/**
 		 * Query 타입으로 조회
 		 */
-//		List resultList = em.createQuery("select m.username, m.age from Member m")
-//									.getResultList();
-//		Object o = resultList.get(0);
-//		Object [] result = (Object[])o;
-//		
-//		System.out.println("username = "+ result[0]);
-//		System.out.println("result = "+ result[1]);
+		// List resultList = em.createQuery("select m.username, m.age from Member m")
+		// .getResultList();
+		// Object o = resultList.get(0);
+		// Object [] result = (Object[])o;
+		//
+		// System.out.println("username = "+ result[0]);
+		// System.out.println("result = "+ result[1]);
 
 		/**
 		 * Objet[] 타입으로 조회
 		 */
-//		List<Object[]> resultList2 = em.createQuery("select m.username, m.age from Member m").getResultList();
-//		
-//		Object[] result2 = resultList2.get(0);
-//	
-//		System.out.println("username = "+ result2[0]);
-//		System.out.println("result = "+ result2[1]);
-		
-		
+		// List<Object[]> resultList2 = em.createQuery("select m.username, m.age from
+		// Member m").getResultList();
+		//
+		// Object[] result2 = resultList2.get(0);
+		//
+		// System.out.println("username = "+ result2[0]);
+		// System.out.println("result = "+ result2[1]);
+
 		/**
 		 * new 타입으로 조회
 		 */
 
-		
-			
-		
-		
 		em.createQuery("select new jpql.MemberDTO(m.username, m.age)from Member m", MemberDTO.class);
 	}
-
 
 	private static void ParamiterBinding(EntityManager em, EntityManagerFactory emf, Member member) {
 		/**
@@ -552,7 +606,6 @@ public class JpqlMain {
 		Member singleResult = query.getSingleResult();
 		System.out.println("singleResult = " + singleResult);
 
-		
 	}
 
 	private static void TypeQueryAndQuery(EntityManager em, EntityManagerFactory emf, Member member) {
