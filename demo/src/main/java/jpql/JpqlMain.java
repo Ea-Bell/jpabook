@@ -1,5 +1,6 @@
 package jpql;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.naming.spi.DirStateFactory.Result;
@@ -20,7 +21,8 @@ public class JpqlMain {
 		tx.begin();
 		try {
 
-			ObjectOrientedQueryLanguage_10(em, emf);
+			// ObjectOrientedQueryLanguage_10(em, emf);
+			ObjectOrientedQueryLanguage_MiddleGrammar_11(em, emf);
 			tx.commit();
 		} catch (Exception e) {
 			tx.rollback();
@@ -29,6 +31,140 @@ public class JpqlMain {
 			em.close();
 		}
 		emf.close();
+
+	}
+
+	private static void ObjectOrientedQueryLanguage_MiddleGrammar_11(EntityManager em, EntityManagerFactory emf) {
+
+		경로표현식(em, emf);
+
+	}
+
+	private static void 경로표현식(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 실무 조언
+		 *  가급적 무시적 조인 대신에 명시적 조인 사용
+		 *  조인은 sql 튜닝에 중요 포인트
+		 *  묵시적 조인은 조인이 일어나는 상황을 하눈ㄴ에 파악하기 어렵다.
+		 */
+		
+		
+		/**
+		 * 명시적 조인, 묵시적 조인
+		 *  명시적 조인: join 키워드 직접 사용
+		 *   select m from Member m join m.team t
+		 *  묵시적 조인: 경로 표현식에 의해 묵시적으로 SQL조인 발생 (내부 조인만 가능)
+		 * 
+		 * select m.team from Member m
+		 */
+
+		/**
+		 *  절대로 묵시적 조인 쓰지 말것.!!!!!!!!!!!!!!!!!!!!
+		 * 경로 표현식
+		 * .(점)을 찍어 객체 그래프를 탐색하는 것.
+		 * select m.username -> 상태 필드
+		 * from Member m
+		 * join m.team t -> 단일 값 연관 필드
+		 * join m.orders o -> 컬렉션 값 연관 필드
+		 * where t.name ='팀A'
+		 * 
+		 * 경로 표현식 용어 정리
+		 * 상태 필드(state field): eㅏㄴ순히 값을 저장하기 위한 필드 (ex: m.username)
+		 * 연관 필드(association field): 연관관계를 위한 필드
+		 * 단일 값 연관 필드
+		 * @ManyToOne, @OneToOne, 대상이 엔티티(Ex: m.team)
+		 * 컬렉션 값 연관 필드
+		 * @OneToMany, @ManyToMany, 대상이 컬렉션(Ex:m.orders)
+		 * 
+		 * 경로 표현식 특징
+		 * 상태 필드(state field): 경로 탐색의 끝, 탐색 X
+		 * 단일 값 연관 경로: 묵시적 내부 조인(inner join) 발생, 탐색 O
+		 * 컬렉션 값 연관 경로: 묵시적 내부 조인 발생, 탐색 X
+		 * from 절에서 명시적 조인을 통해 별칭을 얻으면 별칭을 통해 탐색 가능
+		 */
+
+		 /**
+		  * 경로 표현식 -예제
+		  * select o.member.team from Order o -> 성공 ( 실행시 쿼리가 쉽게 예상하지 못한다.
+		  *
+		  * select t.members from Team -> 성공
+		  *
+		  * select t.members.username from Team t-> 실패
+		  *
+		  * select m.username from Team t join t.members m -> 성공 명시적조인
+		  */
+
+		  /**
+		   * 경로 탐색을 사용한 묵시적 조인시 주의사항
+		   *  항상 내부 조인
+		   *  컬렉션은 경로 탐색의 끝, 명시적 조인을 통해 별칭을 얻어야함.
+		   *  경로 탐색은 주로 select, where 절에서 사용하지만 묵시적 조인으으로 인해 SQL의 FROM(JOIN)절에 영향을 줌.
+		   */
+
+		Team team = new Team();
+		em.persist(team);
+
+		Member member1 = new Member();
+		member1.setUsername("관리자1");
+		member1.setTeam(team);
+		em.persist(member1);
+		Member member2 = new Member();
+		member2.setTeam(team);
+		member2.setUsername("관리자2");
+
+		em.persist(member2);
+
+		em.flush();
+		em.clear();
+
+		// StateField(em, emf);
+		// SingleValuePaht(em, emf);
+		CollectionValuePath(em, emf);
+
+	}
+
+	private static void CollectionValuePath(EntityManager em, EntityManagerFactory emf) {
+		// String query = "select t.member from Team t";  //컬렉션 타입이라서 object로 받아야한다. 그런데 이렇게 받으면 안됨.
+		
+
+		// List<Collection> resultList = em.createQuery(query, Collection.class).getResultList();
+
+		// for (Object team : resultList) {
+		// 	System.out.println("team : "+ team);
+		// }
+
+
+		//이렇게 명확하게 줘야 알아먹기 편하니! 반드시 잊어버리지 말고 이렇게 써야함.
+		String explicitQuery = "select m from Team t join  t.member m";
+			List<Member> explicitResultList = em.createQuery(explicitQuery, Member.class).getResultList();
+
+			for (Member team : explicitResultList) {
+				System.out.println("team : "+ team);
+			}
+	}
+
+	private static void SingleValuePaht(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 묵시적 내부조인
+		 * 실제로 사용할때는 묵시적 내부조인을 사용하면 안된다.
+		 * query튜닝할때 문제가 생기는 경우가 많아진다.
+		 * JPQL이랑 sql이랑 문법이 비슷하게 적는게 좋다.
+		 */
+		String query = "select m.team from Member m";
+		List<Team> resultList = em.createQuery(query, Team.class).getResultList();
+		for (Team team : resultList) {
+			System.out.println("s = " + team);
+		}
+	}
+
+	private static void StateField(EntityManager em, EntityManagerFactory emf) {
+
+		String query = "select m.username from Member m";
+		List<String> resultList = em.createQuery(query, String.class).getResultList();
+
+		for (String string : resultList) {
+			System.out.println("s = " + string);
+		}
 
 	}
 
@@ -73,9 +209,8 @@ public class JpqlMain {
 	}
 
 	private static void UserDefinedFunction(EntityManager em, EntityManagerFactory emf) {
-		//각 DB에 선언된 사용자 정의 함수를 불러오는 거임!!! 만약 사용할꺼면 DB에 사용자 정의 함수 만들어서 불러와!!!!
-		
-		
+		// 각 DB에 선언된 사용자 정의 함수를 불러오는 거임!!! 만약 사용할꺼면 DB에 사용자 정의 함수 만들어서 불러와!!!!
+
 		Team team = new Team();
 		team.setName("teamA");
 		em.persist(team);
@@ -92,8 +227,6 @@ public class JpqlMain {
 		em.flush();
 		em.clear();
 
-
-		
 		String userFunction = "select group_concat(m.username) from Member m";
 		List<String> resultList = em.createQuery(userFunction, String.class)
 				.getResultList();
