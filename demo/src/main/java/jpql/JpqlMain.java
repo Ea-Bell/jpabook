@@ -12,6 +12,8 @@ import javax.persistence.TypedQuery;
 
 public class JpqlMain {
 
+	private static String query;
+
 	public static void main(String[] args) {
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
 
@@ -35,7 +37,6 @@ public class JpqlMain {
 
 	private static void ObjectOrientedQueryLanguage_10(EntityManager em, EntityManagerFactory emf) {
 		/**
-		 * 
 		 * JPA를 우회해서 SQL을 실행하기 직전에 영속성 컨텍스트 수동 플러시 플러시시점은 = commit과 sql문이 날라갈때 flush()가
 		 * 나온다고함.
 		 */
@@ -44,8 +45,212 @@ public class JpqlMain {
 //		QueryDSL(em, emf);//<<<이게 목표다.
 //		Paging(em, emf);
 //		Joins(em, emf);
-		SubQuery(em, emf);
+//		SubQuery(em, emf);
+//		JpqlTypeRepresent(em, emf);
+		ConditionalRepresent(em, emf);
+	
+	}
+
+	
+	private static void ConditionalRepresent(EntityManager em, EntityManagerFactory emf) {
+	/**
+	 *  조건식 -case 식
+	 * 
+	 *   기본 case 식
+	 *    select 
+	 * 		case when m.age <= 10 then '학생요금'
+	 * 			 when m.age >= 60 then '경로요금'
+	 * 			else '일반요금'
+	 * 		end
+	 * from Member m
+	 * 
+	 * 	단순 case 식
+	 * 	  select 
+	 * 		case t.name
+	 * 			when '팀A' then '인센티브110%'
+	 * 			when '팀B' then '인센티브120%'
+	 * 			else '인센티브 105%'
+	 * 		end
+	 * from Team t
+	 * 
+	 * COALESCE: 하나씩 조회해서 nulldㅣ 아니면 반환
+	 * 	사용자 이름이 없으면 이름 없는 회원을 반환
+	 * 	 select coalesce(m.username, '이름 없는 회원') from Member m
+	 * 
+	 * NUllIF: 두 값이 같으면 null 반환, 다르면 첫번쨰 값 반환
+	 *  사용자 이름이 '관리자'면 null을 반환하고 나머지는 본인의 이름을 반환
+	 *   select nullif(m.username, '관리자') from Member m
+	 */
+
+	//BaseIf(em, emf);
+	// Coalesce(em, emf);
+	Nullif(em, emf);
+
+
+
+	}
+
+	private static void Nullif(EntityManager em, EntityManagerFactory emf) {
+		Team team = new Team();
+		team.setName("teamA");
+		em.persist(team);
+
+
+
+		Member member = new Member();
+		member.setUsername("관리자");
+		member.setAge(10);
+		member.setType(MemberType.ADMIN);
 		
+		em.persist(member);
+
+		em.flush();
+		em.clear();
+
+		// 무언가를 숨길 때 nullif가 쓰인다.
+		String query= "select nullif(m.username, '관리자') as username" +
+		" from Member m";
+			List<String> resultList = em.createQuery(query, String.class).getResultList();
+
+			for (String string : resultList) {
+				System.out.println("s = " + string);
+			}
+	}
+
+	private static void Coalesce(EntityManager em, EntityManagerFactory emf) {
+		Team team = new Team();
+		team.setName("teamA");
+		em.persist(team);
+
+
+
+		Member member = new Member();
+		member.setUsername(null);
+		member.setAge(10);
+		member.setType(MemberType.ADMIN);
+		
+		em.persist(member);
+
+		em.flush();
+		em.clear();
+
+		String query ="select coalesce(m.username, '이름 없는 회원') as username from Member m";
+
+				List<String> resultList = em.createQuery(query, String.class).getResultList();
+				for (String string : resultList) {
+					System.out.println("s = " + string);
+				}
+	}
+
+	private static void BaseIf(EntityManager em, EntityManagerFactory emf) {
+		Team team = new Team();
+		team.setName("teamA");
+		em.persist(team);
+
+
+
+		Member member = new Member();
+		member.setUsername("member1");
+		member.setAge(10);
+		member.setType(MemberType.ADMIN);
+		
+		em.persist(member);
+
+		em.flush();
+		em.clear();
+
+		String query = 
+						"select " +
+						"case when m.age <= 10 then '학생요금'" +
+						"	  when m.age >= 60 then '경로요금'" +
+						"	  else '일반요금' " +
+						" end " +
+						" from Member m";
+		 List<String> resultList = em.createQuery(query, String.class).getResultList();
+
+			for (String s : resultList) {
+				System.out.println("s = " +s);
+			}
+
+	}
+
+	private static void JpqlTypeRepresent(EntityManager em, EntityManagerFactory emf) {
+	/**
+	 * JPQL 타입 표현
+	 *  문자: 'HELLO', 'She''s'
+	 *  숫자: 10L(Long), 10D(Double), 10F(Float)
+	 *  Boolean: TRUE, FALSE
+	 *  ENUM: jpabook.MemberType.Admin(패키지명 포함)
+	 *  엔티티 타입: TYPE(m) = Member(상속 관계에서 사용)
+	 */
+
+		Team team = new Team();
+		team.setName("teamA");
+		em.persist(team);
+
+
+
+		Member member = new Member();
+		member.setUsername("member1");
+		member.setAge(10);
+		member.setType(MemberType.ADMIN);
+		
+		em.persist(member);
+
+		em.flush();
+		em.clear();
+		
+		String query = "select m.username, 'HELLO', TRUE FROM Member m " +
+		                "where m.type= jpql.MemberType.ADMIN";
+		String errorQuery = "select m.username, 'HELLO', TRUE FROM Member m " +
+		"where m.type= jpql.MemberType.USER";
+
+
+		
+		List <Object[]>result = em.createQuery(errorQuery).getResultList();
+
+				// for(Object[] objects: result){
+				// 	System.out.println("object = " + objects[0]);
+				// 	System.out.println("object = " + objects[1]);
+				// 	System.out.println("object = " + objects[2]);
+
+				// }
+
+
+
+				//enumType은 이렇게 씁니다.
+				String paramBind = "select m.username, 'HELLO', TRUE FROM Member m " +
+				"where m.type= :userType";
+				List <Object[]>enumTypeList = em.createQuery(paramBind).setParameter("userType", MemberType.ADMIN).getResultList();
+
+				for(Object[] objects: enumTypeList){
+					System.out.println("object = " + objects[0]);
+					System.out.println("object = " + objects[1]);
+					System.out.println("object = " + objects[2]);
+
+				}
+
+		/**
+		 * JPQL 기타
+		 *  SQL과 문법이 같은식
+		 *  EXISTS, IN
+		 *  AND, OR NOT
+		 *  =, >, >=, <, <=, <>
+		 *  BETWEEN, LIKE, IS NULL
+		 */
+
+		String jpqlEx = "select m.username, 'HELLO', TRUE FROM Member m " +
+						"where m.age between 0 and 10";
+		List <Object[]>jpqlExList = em.createQuery(paramBind).setParameter("userType", MemberType.ADMIN).getResultList();
+
+		for(Object[] objects: jpqlExList){
+			System.out.println("object = " + objects[0]);
+			System.out.println("object = " + objects[1]);
+			System.out.println("object = " + objects[2]);
+
+		}
+
+
 	}
 
 	private static void SubQuery(EntityManager em, EntityManagerFactory emf) {
@@ -86,9 +291,15 @@ public class JpqlMain {
 			* JPA 서브 쿼리 한계
 			*  JPA는 where, having 절에서만 서브 쿼리 사용 가능
 			*  select 절도 가능(하이버 네이트에서 지원)
-			*  from 절의 서부ㅡ 쿼리는 현재 JPQL에서 불가능  >> 중요!
+			*  from 절의 서브쿼리는 현재 JPQL에서 불가능  >> 중요!
 			*    조인으로 풀 수 있으면 풀어서 해결
 			* */
+
+
+
+
+
+	
 
 	}
 
@@ -147,7 +358,7 @@ public class JpqlMain {
 		//JoinFilter(em, emf);
 			
 		 //연관 관계 없는 대상
-		 NoAssociation(em, emf);
+		// NoAssociation(em, emf);
 
  		 
 	}
