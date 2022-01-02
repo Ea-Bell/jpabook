@@ -1,5 +1,8 @@
 package jpql;
 
+import java.util.List;
+
+import javax.naming.spi.DirStateFactory.Result;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
@@ -37,8 +40,48 @@ public class JpqlMain {
 		 * 나온다고함.
 		 */
 
-		Jpql(em, emf);
+//		Jpql(em, emf);
 //		QueryDSL(em, emf);//<<<이게 목표다.
+		Paging(em, emf);
+
+		
+	}
+
+
+
+	private static void Paging(EntityManager em, EntityManagerFactory emf) {
+			/**
+			 * 페이징 API
+			 * JPA는 페이징을 다음 두 API로 추상화
+			 * setFirstResult(int start Position): 조회 시작 위치(0부터 시작)
+			 * setMaxResults(int maxResult): 조회할 데이터 수
+			 * 
+			 * 현재 데이터 베이스 방언으로 돌아간다. persistence.xml의 hibernate.dialect의 value값을 바꾸면 각 DB로 맞춰서 쿠리를 짜서 보낸다.
+			 */
+			
+			for(int i= 0; i<100; i++){
+			 Member member = new Member();
+			 member.setUsername("member"+i);
+			 member.setAge(i);
+			 em.persist(member);
+			}
+			 em.flush();
+			 em.clear();
+
+			List<Member> result = em.createQuery("select m from Member m order by m.age desc", Member.class)
+						.setFirstResult(1)
+						.setMaxResults(10)
+						.getResultList();
+
+				
+			System.out.println("result.size : "+result.size());
+
+			for (Member member1: result){
+				System.out.println("member1 =" + member1);
+			}
+
+
+
 	}
 
 	private static void QueryDSL(EntityManager em, EntityManagerFactory emf) {
@@ -152,10 +195,11 @@ public class JpqlMain {
 		 */
 
 		
+			
 		
 		
-		
-		em.createQuery("select new jpql.MemberDTO(m.username, m.age)from Member m", MemberDTO.class)
+		em.createQuery("select new jpql.MemberDTO(m.username, m.age)from Member m", MemberDTO.class);
+	}
 
 
 	private static void ParamiterBinding(EntityManager em, EntityManagerFactory emf, Member member) {

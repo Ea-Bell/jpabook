@@ -53,6 +53,13 @@ public class Member {
 		this.team = team;
 	}
 
+	@Override
+	public String toString() {
+		return "Member [Id=" + Id + ", age=" + age + ", username=" + username + "]";
+	}
+
+
+	
 	
 	
 	
