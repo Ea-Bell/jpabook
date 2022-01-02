@@ -42,12 +42,96 @@ public class JpqlMain {
 
 //		Jpql(em, emf);
 //		QueryDSL(em, emf);//<<<이게 목표다.
-		Paging(em, emf);
-
+//		Paging(em, emf);
+		Joins(em, emf);
 		
 	}
 
+	private static void Joins(EntityManager em, EntityManagerFactory emf) {
 
+
+		Team team= new Team();
+		team.setName("teamA");
+		
+		em.persist(team);
+
+		Member member = new Member();
+		member.setAge(10);
+		member.setUsername("teamA");
+		member.setTeam(team);
+		em.persist(member);
+		em.flush();
+		em.clear();
+
+		/**
+		 * 조인
+		 * 	내부 조인:
+		 *   select m from Member m [Inner] join m.team t
+		 *  외부 조인:
+		 *   select m from Member m Left [Outer] Join m.team
+		 * 	세타 조인:(연관 관계 없을때 필요한 조인)
+		 *   select count(m) from Member m , Team t where m.username=t.name
+		 */
+		//Join(em, emf);
+
+
+		/**
+		 *  조인 on절
+		 * 	 1. 조인 대상 필터링
+		 *   2. 연관관계 없는 엔티티 외부 조인(하이버네이트 5.1부터)
+		 * 
+		 *  1_1 조인 대상 필터링
+		 *   예) 회원과 팀을 조인하면서, 팀 이름이 A인 팀만 조인
+		 * 	  JPQL:
+		 * 		select m, t from Member m left join m.team t on t.name='A'
+		 * 	  SQL:
+		 * 		selecrt m.*, t.* from
+		 * 		Member m left join Team t on m.TEAM_ID=t.id and t.name='A'
+		 * 	
+		 *  2_1 연관관계 없는 엔티티 외부 조인
+		 * 	 예) 회원의 이름과 팀의 이름이 같은 대상 외부 조인
+		 * 	  JPQL:
+		 * 		select m, t from Member m left join Team t on m.username=t.name
+		 * 	  SQL:
+		 * 		select m.*, t.* from Member m Left join Team t on m.username= t.name
+		 * 
+		 */
+			
+
+		//조인 대상 필터링
+		//JoinFilter(em, emf);
+			
+		 //연관 관계 없는 대상
+		 NoAssociation(em, emf);
+
+ 		 
+	}
+
+	private static void Join(EntityManager em, EntityManagerFactory emf) {
+		String innerJoin = "select m from Member m inner join m.team t ";
+		String innerJoin2 = "select m from Member m join m.team t ";
+		String leftOuterJoin = "select m from Member m left outer join m.team t";
+		String leftOuterJoin2 = "select m from Member m left join m.team t";
+		String setaJoin = "select m from Member m , Team t where m.username=t.name"; //cross라고 나옴!
+		List<Member> result = em.createQuery(setaJoin, Member.class)
+							.getResultList();
+		
+		System.out.println("result = " + result.size());
+	}
+
+	private static void NoAssociation(EntityManager em, EntityManagerFactory emf) {
+		String noAssociation= "select m from Member m left join Team t on m.username=t.name";
+		List<Member> onQueryResult = em.createQuery(noAssociation, Member.class)
+		.getResultList();
+		System.out.println("result :"+ onQueryResult.size());
+	}
+
+	private static void JoinFilter(EntityManager em, EntityManagerFactory emf) {
+		String onQuery= "select m from Member m left join m.team t on t.name= 'teamA'";
+		List<Member> onQueryResult = em.createQuery(onQuery, Member.class)
+		.getResultList();
+		System.out.println("result :"+ onQueryResult.size());
+	}
 
 	private static void Paging(EntityManager em, EntityManagerFactory emf) {
 			/**
@@ -211,6 +295,7 @@ public class JpqlMain {
 		query.setParameter("username", "member1");
 		Member singleResult = query.getSingleResult();
 		System.out.println("singleResult = " + singleResult);
+
 		
 	}
 
@@ -223,5 +308,4 @@ public class JpqlMain {
 		Query query3 = em.createQuery("select m.username, m.age from Member m", Member.class);
 
 	}
-
 }
