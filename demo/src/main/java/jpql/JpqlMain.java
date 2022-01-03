@@ -1,9 +1,7 @@
 package jpql;
 
-import java.util.Collection;
 import java.util.List;
 
-import javax.naming.spi.DirStateFactory.Result;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
@@ -37,8 +35,90 @@ public class JpqlMain {
 	private static void ObjectOrientedQueryLanguage_MiddleGrammar_11(EntityManager em, EntityManagerFactory emf) {
 		
 		//경로표현식(em, emf);
-		페치조인(em, emf);
+		//페치조인(em, emf);
+		//다형성쿼리(em,emf);
+		//엔티티직접사용(em, emf);
+		//Named쿼리(em ,emf);
+		  벌크연산(em, emf);
 
+	}
+
+	private static void 벌크연산(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 벌크 연산
+		 *  재고가 10개 미만인 모든 상품의 가격을 10% 상승하려면?
+		 *  JPA변경 감지 기능으로 실행하려면 너무 많은 SQL실행
+		 *   1. 재고가 10개 미만인 상품을 리스트로 조회한다.
+		 *   2. 상품 엔티티의 가격을 10% 증가한다.
+		 *   3. 트랜잭션 커밋 시점에 변경감지가 동작한다.
+		 *  변경된 데이터가 100건이라면 100번의 UPDATE SQL 실행됨.
+		 * 
+		 * 벌크 연산 예제
+		 *  쿼리 한 번으로 여러 테이블 로우 변경(엔티티)
+		 *  executeUpdate()의 결과는 영향받은 엔티티 수 반환
+		 *  UPDATE, DELETE지원
+		 *  INSERT(insert into .. select , 하이버 네이트 지원)
+		 *  
+		 * String qlString = "update Product p "+
+		 * 					"set p.price = p.price *1.1 "+
+		 * 					"where p.stockAmount < :stockAmount";
+		 * int resultCount = em.createQuery(qlString).setParameter("stockAmount", 10). executeUpdate();
+		 * 
+		 * 벌크 연산 주의!!!!!!
+		 *  벌크 연산은 영속성 컨텍스트를 무시하고 데이터베이스에 직접 쿼리
+		 *   벌크 연산을 먼저 실행!!!!!
+		 *   벌크 연산 수행 후 영속성 컨텍스트 초기화!
+		 */
+
+		Team teamA = new Team();
+		teamA.setName("teamA");
+		em.persist(teamA);
+	
+		Team teamB = new Team();
+		teamB.setName("teamB");
+		em.persist(teamB);
+	
+		Member member1 = new Member();
+		member1.setAge(10);
+		member1.setUsername("회원1");
+		member1.setTeam(teamA);
+		em.persist(member1);
+	
+		Member member2 = new Member();
+		member2.setAge(10);
+		member2.setUsername("회원2");
+		member2.setTeam(teamA);
+		em.persist(member2);
+	
+		Member member3 = new Member();
+		member3.setAge(10);
+		member3.setUsername("회원3");
+		member3.setTeam(teamB);
+		em.persist(member3);
+	
+		em.flush();
+		em.clear();
+
+		int executeUpdate = em.createQuery("update Member m set m.age=20").executeUpdate();
+		
+
+		System.out.println("resultCount = " + executeUpdate);
+
+
+		//띠용? 실제 값은 바뀌지 않았다.
+		System.out.println("member1.getAge() = "+ member1.getAge());
+		System.out.println("member2.getAge() = "+ member2.getAge());
+		System.out.println("member3.getAge() = "+ member3.getAge());
+
+
+		//새로 조회해도 값은 변하지 않는다.
+		Member findMember = em.find(Member.class, member1.getId());
+		System.out.println("member1.getAge() = "+ findMember.getAge());
+		
+		//새로 작업할려면 em.clear()을 하면된다.
+		em.clear();
+		Member findMember2 = em.find(Member.class, member1.getId()); //<< 다시 영속성을 시켜 작업을해야한다.
+		System.out.println("member1.getAge() = "+ findMember2.getAge());
 	}
 
 	private static void 페치조인(EntityManager em, EntityManagerFactory emf) {
@@ -64,9 +144,287 @@ public class JpqlMain {
 		 *  select M.*, T.* from Member m inner join Team t on m.Team_id=T.Id 
 		 */
 
+		/**
+		 * 컬렉션 페치 조인
+		 *  일대다 관계, 컬렉션 페치 조인
+		 * 
+		 * 	[JPQL] 
+		 *  select t from Team t fetch t.members where t.name ='팀A'
+		 * 
+		 *  [SQL]
+		 *  select T.*, M.* from Team T inner join Member M on T.ID = M.TEAM_ID where T.NAME='팀A'
+		 */
 
-		페치조인1기본(em, emf);
+
+		 /**
+		  * 페치 조인과 일반 조인의 차이
+		  * 페치 조인을 사용할 때만 연관된 엔티티도 함께 조회(즉시로딩)
+		  * 페치 조인은 객체 그래프를 SQL한번에 조회하는 개념 
+		  */
+
+
+		//페치조인1기본(em, emf);
+		//페치조인2한계(em, emf);
 	
+	
+	}
+
+	private static void Named쿼리(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * Named쿼리 -정적 쿼리
+		 *  미리 정의해서 이름을 부여해두고 사용하는 JPQL
+		 *  "정적 쿼리"
+		 *  어노테이션, XML에 정의
+		 *  "애플리케이션 로딩 시점에 초기화 후 재사용"
+		 *  "애프리케이션 로딩 시점에 쿼리를 검증"
+		 */
+
+		Team teamA = new Team();
+		teamA.setName("teamA");
+		em.persist(teamA);
+	
+		Team teamB = new Team();
+		teamB.setName("teamB");
+		em.persist(teamB);
+	
+		Member member1 = new Member();
+		member1.setAge(10);
+		member1.setUsername("회원1");
+		member1.setTeam(teamA);
+		em.persist(member1);
+	
+		Member member2 = new Member();
+		member2.setAge(10);
+		member2.setUsername("회원2");
+		member2.setTeam(teamA);
+		em.persist(member2);
+	
+		Member member3 = new Member();
+		member3.setAge(10);
+		member3.setUsername("회원3");
+		member3.setTeam(teamB);
+		em.persist(member3);
+	
+		em.flush();
+		em.clear();
+
+		 List<Member> resultList = em.createNamedQuery("Member.findByUsername", Member.class)
+		 					.setParameter("username", "회원1").getResultList();
+			for (Member member : resultList) {
+				System.out.println("member = " + member);
+			}
+	}
+
+	private static void 엔티티직접사용(EntityManager em, EntityManagerFactory emf) {
+	 
+	/**
+	 * 엔티티 직접 사용 - 기본 키 값
+	 *  JPQL에서 엔티티를 직접 사용하면 SQL에서 해당 엔티티의 기본 키 값을 사용
+	 * 
+	 * [JPQL]
+	 *  select count(m.id) from Member m //엔티티의 아이디를 사용
+	 *  select count(m) from Member m //엔티티를 직접 사용<<< JPQL에서
+	 * 
+	 * [SQL] (JPQL 둘다 같은 다음 SQL 실행)
+	 *  select count(m.id) as cnt from Member m
+	 * 
+	 * 엔티티를 파라미터로 전달
+	 *  String jpql ="select m from Member m where m = :member";
+	 *  List resultList = em.createQuery(jpql).setParameter("member", member).getResultList();
+	 * 
+	 * 식별자를 직접 전달
+	 *  String jpql ="select m from Member m where m.id =:memberId";
+	 *  List resultList = em.createQuery(jpql).setParameter("memberId", memberId).getResultList();
+	 * 
+	 * 실행된 SQL
+	 *  select m.*from Member m where =m.id=?
+	 * 
+	 * 엔티티 직접사용 - 외래 키값
+	 *  
+	 * 엔티티 파라미터로 전달
+	 *  Team team =em. find(Team.class, 1L);
+	 *  String qlString ="select m from Member m where m.team = :team";
+	 *  List resultList = em.createQuery(qlString).setParameter("team", team).getResultList();
+	 * 
+	 * 식별자를 직접 전달
+	 *  String qlString ="select m from MEmber m where m.team.id=:teamId";
+	 *  List resultLsit = em.createQuery(qlString).setParameter("teamId", teamId).getResultList();
+	 * 
+	 * 실행된 SQL
+	 *  select m.* from Member m where m.team_id=?
+	 */
+
+	Team teamA = new Team();
+	teamA.setName("teamA");
+	em.persist(teamA);
+
+	Team teamB = new Team();
+	teamB.setName("teamB");
+	em.persist(teamB);
+
+	Member member1 = new Member();
+	member1.setAge(10);
+	member1.setUsername("회원1");
+	member1.setTeam(teamA);
+	em.persist(member1);
+
+	Member member2 = new Member();
+	member2.setAge(10);
+	member2.setUsername("회원2");
+	member2.setTeam(teamA);
+	em.persist(member2);
+
+	Member member3 = new Member();
+	member3.setAge(10);
+	member3.setUsername("회원3");
+	member3.setTeam(teamB);
+	em.persist(member3);
+
+	em.flush();
+	em.clear();
+
+
+	//기본키값으로넘김(em, emf,member1);
+	외래키값으로넘김(em, emf, teamA);
+
+
+
+
+
+	}
+
+	private static void 외래키값으로넘김(EntityManager em, EntityManagerFactory emf, Team teamA) {
+		String query = "select m from Member m where m.team = :team";
+		List<Member> resultList = em.createQuery(query, Member.class).setParameter("team", teamA).getResultList();
+		for (Member member : resultList) {
+			System.out.println("Member = "+ member);
+		}
+	}
+
+	private static void 기본키값으로넘김(EntityManager em, EntityManagerFactory emf, Member member1) {
+			//엔티티를 파라미터로 전달
+			String query ="select m from Member m where m = :member";
+			List<Member> resultList = em.createQuery(query, Member.class).setParameter("member", member1).getResultList();
+		   System.out.println("resultLsit = "+resultList);
+		   //식별자를 직접 전달
+		   String query2 ="select m from Member m where m.id = :memberId";
+		   List<Member> resultList2 = em.createQuery(query2, Member.class).setParameter("memberId", member1.getId()).getResultList();
+		  System.out.println("resultLsit = "+resultList2);
+	}
+
+	private static void 다형성쿼리(EntityManager em, EntityManagerFactory emf) {
+	/**
+	 * TYPE
+	 *  조회 대상을 특정 자식으로 한정
+	 *  예) Item 중에 Book, Movie를 조회해라
+	 *  [JPQL]
+	 *   select i from Item i where type(i) in(Book, Movie)
+	 * 
+	 *  [SQL]
+	 *   select i from i where i.DTYPE in ('B', 'M')
+	 * 
+	 *  TREAT(JPA 2.1)
+	 *  자바의 타입 캐스팅과 유사
+	 *  상속 구조에서 부모 타입을 특정 자식 타입으로 다룰 때 사용
+	 *  FROM, WHERE, SELECT(하이버네이트 지원)사용
+	 *  예) 부모인 Item과 자식 Book이 있다.
+	 *  
+	 *  [JPQL]
+	 *   select i from Item i where treat(i as Book).auther = 'kim'
+	 * 
+	 *  [SQL]
+	 *   select i.* from Item i where i.DTYPE ='B' and i.auther ='kim'
+	 */
+	
+	}
+
+	private static void 페치조인2한계(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 페치 조인의 특징과 한계
+		 *  페치 조인 대상에는 별치을 줄 수 없다
+		 *   하이버네이트는 가능, 가급적 사용하지 않는다.
+		 * 
+		 *  둘 이상 컬렉션은 페치 조인 할 수 없다.
+		 * 
+		 *  컬렉션을 페치조인하면 페이징 API를 사용할 수 없다.
+		 *    일대일, 다대일 같은 단일 값 연관 필드들은 페치 조인해도 페이징 가능
+		 *    하이버네이트는 경고 로그를 남기고 메모리에서 페이징(매우위험!!!!!!!!!!!!!)
+		 * 
+		 *  연관된 엔티티들을 SQL한 번으로 조회 -성능 최적화
+		 *  엔티티ㅔ 직접 적용하는 글로벌 로딩 전략보다 우선함
+		 *   @OneToMant(Fetch=FetchType.LAZY)//글로벌 로딩 전략
+		 *  실무에서 글로벌 로딩 전략은 모두 지연 로딩
+		 *  최적화 필요한 곳은 페치 조인 적용
+		 * 
+		 */
+
+		 /**
+		  * 정리
+		  *  모든 것을 페치 조인으로 해결할 수는 없음
+		  *  페치 조인은 객체 그래프를 유지할 때 사용하면 효과적
+		  *  여러 테이블을 조인해서 엔티티가 가진 모양이 아닌 전혀 다른 결과를 내야 하면, 페치 조인보다 일반 조인을 사용하고 필요한 
+		  *  데이터들만 조회해서 DTO로 반환하는 것이 효과적이다.
+		  */
+
+
+		Team teamA = new Team();
+		teamA.setName("teamA");
+		em.persist(teamA);
+
+		Team teamB = new Team();
+		teamB.setName("teamB");
+		em.persist(teamB);
+
+		Member member1 = new Member();
+		member1.setAge(10);
+		member1.setUsername("회원1");
+		member1.setTeam(teamA);
+		em.persist(member1);
+
+		Member member2 = new Member();
+		member2.setAge(10);
+		member2.setUsername("회원2");
+		member2.setTeam(teamA);
+		em.persist(member2);
+
+		Member member3 = new Member();
+		member3.setAge(10);
+		member3.setUsername("회원3");
+		member3.setTeam(teamB);
+		em.persist(member3);
+
+		em.flush();
+		em.clear();
+
+		컬렉션테스트(em,emf);
+
+
+	}
+
+	private static void 컬렉션테스트(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 매우 위험!!
+		 * WARN: HHH000104: firstResult/maxResults specified with collection fetch; applying in memory! << 메모리에 로드되었다고 경고 메시지뜸! 
+		 * 그리고 페이지 쿼리가 나가지 않았다!
+		 */
+
+		// String query = "select t from Team t join fetch t.member m";
+		// List<Team> resultList = em.createQuery(query, Team.class).setFirstResult(0).setMaxResults(10).getResultList();
+		// System.out.println("result = "+ resultList);
+
+		//해결방법! "다대일"로 해결하면됨!
+		//  컬렉션 해결방법 -> BatchSize   LazyLoding으로 넘길때 BatchSize로 넘길 갯수를 정해서 넘기면 된다. 
+		// BatchSize는 실무에서는 Global로 선언을 하기 떄문에 persistence.xml을 수정해준다.(1000개보다 적게 선언해주는게 팁임)
+		// 3번째 방법 DTO로 새로 작성하면됨!
+		String manyToOneQuery = "select t from Team t";
+		List<Team> resultList = em.createQuery(manyToOneQuery, Team.class).setFirstResult(0).setMaxResults(2).getResultList();
+		System.out.println("result = "+ resultList.size());
+				for (Team team : resultList) {
+				 System.out.println("team = " + team.getName()+", " +team.getMember().size());
+					for(Member member : team.getMember()){
+						System.out.println("-> member = " + member);
+				}
+		}
 	}
 
 	private static void 페치조인1기본(EntityManager em, EntityManagerFactory emf) {
@@ -118,11 +476,60 @@ public class JpqlMain {
 		// 	}
 
 			//페치 조인으로 해결해야한다.
-		String fetchJoinQuerty = "select m from Member m join fetch m.team";
-		List<Member> fetchResultList = em.createQuery(fetchJoinQuerty, Member.class).getResultList();
-		for (Member member : fetchResultList) {
-			System.out.println("member = "+ member.getUsername() + ", "+ member.getTeam().getName());
-		}
+		// String fetchJoinQuery = "select m from Member m join fetch m.team";
+		// List<Member> fetchResultList = em.createQuery(fetchJoinQuery, Member.class).getResultList();
+		// for (Member member : fetchResultList) {
+		// 	System.out.println("member = "+ member.getUsername() + ", "+ member.getTeam().getName());
+		// }
+
+	
+
+
+
+		//컬렉션 페치 조인
+		/**
+		 * 1:다는 데이터가 뻥튀기 당할수 있다!
+		 */
+
+		// String collectionQuery = "select distinct t from Team t join fetch t.member";
+		// List<Team> resultList = em.createQuery(collectionQuery, Team.class).getResultList();
+		// for (Team team : resultList) {
+		// 	System.out.println("team = " + team.getName()+", " +team.getMember().size());
+		// 		for(Member member : team.getMember()){
+		// 			System.out.println("-> member = " + member);
+		// 		}
+		// }
+
+		/**
+		 *  페치 조인과 DISTINCT
+		 *  SQL의 DISTINCT는 중복된 결과를 제거하는 명령
+		 *  JPQL의 DISTINCT 2가지 기능 제공
+		 *   1. SQL에  DISTINCT추가
+		 *   2. 애플리케이션에서 엔티티 중복 제거
+		 *  
+		 *  select distinct t from Team t jopin fetch t.members where t.name ='팀A'
+		 *  SQL에 DISTINCT를 추가하지만 데이터가 다르므로 SQL결과에서 중복제거 실패(결과 같이 모두 같아야 DISTINCT가 발동됨!)
+		 *  DISTINCT가 추가로 애플리케이션에서 중복 제거시도
+		 *  같은 식별자를 가진 TEAM 엔티티 제거
+		 */
+
+		/**
+		 * 페치 조인과 일반 조인의 차이
+		 * 
+		 * 일반조인 실행시 연관된 엔티티를 함께 조회하지 않음
+		 * 
+		 * [JPQL]
+		 * select from Team t join t.members m where t.name ='팀A'
+		 * 
+		 * [SQL]
+		 * select T.* from Team T inner join Member M on T.ID=M.TEAM_ID where T.NAME='팀A'
+		 */
+
+		//  String distinctQuery = "select distinct from Team t join fetch t.member";
+		//  List<Team> resultList = em.createQuery(distinctQuery, Team.class).getResultList();
+		//  for (Team team : resultList) {
+		// 	 System.out.println("team");
+		//  }
 
 	}
 
@@ -131,7 +538,7 @@ public class JpqlMain {
 		 * 실무 조언
 		 *  가급적 무시적 조인 대신에 명시적 조인 사용
 		 *  조인은 sql 튜닝에 중요 포인트
-		 *  묵시적 조인은 조인이 일어나는 상황을 하눈ㄴ에 파악하기 어렵다.
+		 *  묵시적 조인은 조인이 일어나는 상황을 한 눈에 파악하기 어렵다.
 		 */
 		
 		
@@ -186,6 +593,8 @@ public class JpqlMain {
 		   *  컬렉션은 경로 탐색의 끝, 명시적 조인을 통해 별칭을 얻어야함.
 		   *  경로 탐색은 주로 select, where 절에서 사용하지만 묵시적 조인으으로 인해 SQL의 FROM(JOIN)절에 영향을 줌.
 		   */
+
+
 
 		Team team = new Team();
 		em.persist(team);

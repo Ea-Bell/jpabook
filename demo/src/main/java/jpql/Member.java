@@ -8,8 +8,16 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
+
 
 @Entity
+
+//NAmedQuery의 name은 클래스명.xxxx로 관리한다.
+@NamedQuery(
+	name="Member.findByUsername",
+	query = "select m from Member m where m.username= :username"
+)
 public class Member {
 
 

@@ -9,6 +9,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
+import org.hibernate.annotations.BatchSize;
+
 @Entity
 public class Team {
 
@@ -16,6 +18,7 @@ public class Team {
 	@GeneratedValue
 	private Long id;
 	private String name;
+	
 	
 	@OneToMany(mappedBy = "team")
 	private List<Member> member= new ArrayList<>();
