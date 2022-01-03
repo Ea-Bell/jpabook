@@ -35,8 +35,94 @@ public class JpqlMain {
 	}
 
 	private static void ObjectOrientedQueryLanguage_MiddleGrammar_11(EntityManager em, EntityManagerFactory emf) {
+		
+		//경로표현식(em, emf);
+		페치조인(em, emf);
 
-		경로표현식(em, emf);
+	}
+
+	private static void 페치조인(EntityManager em, EntityManagerFactory emf) {
+		/**
+		 * 실무에서 엄청나게 중요!!
+		 *  페치조인(fetch join)
+		 *  SQL 조인 종류 x
+		 *  JPQL에서 성능 최적화를 위해 제공하는 기능
+		 *  연관된 엔티티나 컬렉션을 SQL한 번에 함께 조회하는 기능
+		 *  join fetch 명령어 사용
+		 *  페치 조인 ::= [LEFT[OUTER]| INNER] JOIN FETCH 조인경로
+		 */
+
+		/**
+		 * 엔티티 페치 조인
+		 * 회원을 조회하면서 연관된 티도 함께 조회(SQL 한번에)
+		 * SQL을 보면 회원 뿐만 아니라 팀(T.*)도 함께 select 
+		 * 
+		 * [JPQL]
+		 *  select m from Member m join fetch m.team
+		 * 
+		 * [SQL]
+		 *  select M.*, T.* from Member m inner join Team t on m.Team_id=T.Id 
+		 */
+
+
+		페치조인1기본(em, emf);
+	
+	}
+
+	private static void 페치조인1기본(EntityManager em, EntityManagerFactory emf) {
+
+
+		Team teamA = new Team();
+		teamA.setName("teamA");
+		em.persist(teamA);
+
+		Team teamB = new Team();
+		teamB.setName("teamB");
+		em.persist(teamB);
+
+
+		Member member1 = new Member();
+		member1.setAge(10);
+		member1.setUsername("회원1");
+		member1.setTeam(teamA);
+		em.persist(member1);
+
+
+		Member member2 = new Member();
+		member2.setAge(10);
+		member2.setUsername("회원2");
+		member2.setTeam(teamA);
+		em.persist(member2);
+
+		Member member3 = new Member();
+		member3.setAge(10);
+		member3.setUsername("회원3");
+		member3.setTeam(teamB);
+		em.persist(member3);
+
+		em.flush();
+		em.clear();
+
+		
+		// String query ="select m from Member m";
+		// List<Member> resultList = em.createQuery(query,Member.class)
+		// 				.getResultList();
+		// 	for (Member member : resultList) {
+		// 		System.out.println("member= "+ member.getUsername() + ", "+ member.getTeam().getName());
+		// 		//회원1, 팀A(SQL)
+		// 		//회원2, 팀A(1차캐시 영속성 컨텍스트에서 가져옴.)
+		// 		//회원3, 팀B(SQL, 새로운 쿼리를 날림.)
+
+
+		// 		//-> 회원 100명 -> N+1이 생김.
+		// 	}
+
+			//페치 조인으로 해결해야한다.
+		String fetchJoinQuerty = "select m from Member m join fetch m.team";
+		List<Member> fetchResultList = em.createQuery(fetchJoinQuerty, Member.class).getResultList();
+		for (Member member : fetchResultList) {
+			System.out.println("member = "+ member.getUsername() + ", "+ member.getTeam().getName());
+		}
 
 	}
 
@@ -108,6 +194,7 @@ public class JpqlMain {
 		member1.setUsername("관리자1");
 		member1.setTeam(team);
 		em.persist(member1);
+
 		Member member2 = new Member();
 		member2.setTeam(team);
 		member2.setUsername("관리자2");
@@ -503,15 +590,19 @@ public class JpqlMain {
 	private static void Joins(EntityManager em, EntityManagerFactory emf) {
 
 		Team team = new Team();
-		team.setName("teamA");
-
+		team.setName("팀A");
 		em.persist(team);
 
-		Member member = new Member();
-		member.setAge(10);
-		member.setUsername("teamA");
-		member.setTeam(team);
-		em.persist(member);
+		Member member1 = new Member();
+		member1.setUsername("회원1");
+		member1.setTeam(team);
+		em.persist(member1);
+
+		Member member2 = new Member();
+		member2.setUsername("회원2");
+
+
+
 		em.flush();
 		em.clear();
 
